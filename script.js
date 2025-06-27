@@ -23,6 +23,8 @@ class Calendar {
         this.applyPlanTheme();
         this.requestNotificationPermission();
         this.checkTodayEventsForNotification();
+        // Gün değişimini otomatik algıla
+        this.startDayChangeWatcher();
     }
     
     bindEvents() {
@@ -1351,6 +1353,18 @@ class Calendar {
     getRepeatLabel(val) {
         const map = { none: 'Tek Seferlik', weekly: 'Her Hafta', monthly: 'Her Ay', yearly: 'Her Yıl' };
         return map[val] || 'Tek Seferlik';
+    }
+
+    startDayChangeWatcher() {
+        this._lastDay = (new Date()).getDate();
+        setInterval(() => {
+            const now = new Date();
+            if (now.getDate() !== this._lastDay) {
+                this._lastDay = now.getDate();
+                this.currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                this.renderCalendar();
+            }
+        }, 60 * 1000); // Her dakika kontrol et
     }
 }
 
