@@ -9,11 +9,25 @@
 <body>
     <div class="container">
         <header>
+            <div class="top-bar">
+                <button id="homeBtn" class="home-btn">🏠 Anasayfa</button>
+                <div class="plan-controls">
+                    <select id="planSelector" class="plan-selector">
+                        <option value="default">📅 Ana Plan</option>
+                    </select>
+                    <button id="newPlanBtn" class="new-plan-btn">➕ Yeni Plan</button>
+                </div>
+                <button id="themeToggle" class="theme-toggle">🌙</button>
+            </div>
             <h1>Aylık Takvim Planlayıcı</h1>
             <div class="controls">
                 <button id="prevMonth">&lt;</button>
                 <h2 id="currentMonth">Haziran 2025</h2>
                 <button id="nextMonth">&gt;</button>
+                <button id="monthViewBtn" class="month-view-btn">📆 Ay</button>
+                <button id="weekViewBtn" class="week-view-btn">🗓️ Hafta</button>
+                <button id="dayViewBtn" class="day-view-btn">📖 Gün</button>
+                <button id="yearViewBtn" class="year-view-btn">📅 12 Ay Görünüm</button>
             </div>
             <div class="header-buttons">
                 <div class="export-controls">
@@ -53,6 +67,22 @@
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h3 id="modalDate">Etkinlik Ekle</h3>
+                <select id="eventCategory" class="event-category">
+                    <option value="is">💼 İş</option>
+                    <option value="kisisel">👤 Kişisel</option>
+                    <option value="tatil">🏖️ Tatil</option>
+                    <option value="dogumgunu">🎂 Doğum Günü</option>
+                    <option value="toplanti">📅 Toplantı</option>
+                    <option value="diger">🔖 Diğer</option>
+                </select>
+                <select id="eventRepeat" class="event-repeat">
+                    <option value="none">Tek Seferlik</option>
+                    <option value="weekly">Her Hafta</option>
+                    <option value="monthly">Her Ay</option>
+                    <option value="yearly">Her Yıl</option>
+                </select>
+                <input type="file" id="eventFile" class="event-file" />
+                <div id="eventFileInfo" class="event-file-info"></div>
                 <textarea id="eventText" placeholder="Etkinliğinizi buraya yazın..."></textarea>
                 <div class="modal-buttons">
                     <button id="saveEvent">Kaydet</button>
@@ -82,6 +112,67 @@
                 <div class="modal-buttons">
                     <button id="generateViewLink">🔗 Sadece Görüntüleme Linki</button>
                     <button id="generateEditLink">✏️ Düzenleme Linki</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 12 Ay Genel Görünüm Modalı -->
+        <div id="yearModal" class="modal">
+            <div class="modal-content year-modal-content">
+                <span class="close" id="closeYearModal">&times;</span>
+                <h3>12 Ay Genel Takvim</h3>
+                <div id="yearGrid" class="year-grid"></div>
+            </div>
+        </div>
+        
+        <!-- Yeni Plan Oluşturma Modalı -->
+        <div id="newPlanModal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="closeNewPlanModal">&times;</span>
+                <h3>🆕 Yeni Plan Oluştur</h3>
+                <div class="plan-form">
+                    <div class="form-group">
+                        <label for="planName">Plan Adı:</label>
+                        <input type="text" id="planName" placeholder="Örn: İş Planı, Tatil Planı..." />
+                    </div>
+                    <div class="form-group">
+                        <label for="planDescription">Açıklama (İsteğe bağlı):</label>
+                        <textarea id="planDescription" placeholder="Planınız hakkında kısa bir açıklama..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="planColor">Renk Teması:</label>
+                        <div class="color-options">
+                            <div class="color-option" data-color="blue" style="background: #4facfe;"></div>
+                            <div class="color-option" data-color="green" style="background: #4CAF50;"></div>
+                            <div class="color-option" data-color="purple" style="background: #9C27B0;"></div>
+                            <div class="color-option" data-color="orange" style="background: #FF9800;"></div>
+                            <div class="color-option" data-color="red" style="background: #F44336;"></div>
+                            <div class="color-option" data-color="pink" style="background: #E91E63;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button id="createPlan">✅ Plan Oluştur</button>
+                    <button id="cancelPlan">❌ İptal</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Plan Yönetimi Modalı -->
+        <div id="planManagementModal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="closePlanManagementModal">&times;</span>
+                <h3>📋 Plan Yönetimi</h3>
+                <div class="plan-list">
+                    <div id="plansList" class="plans-container">
+                        <!-- Planlar buraya dinamik olarak eklenecek -->
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button id="exportPlanBtn">⬇️ Dışa Aktar</button>
+                    <label for="importPlanInput" class="import-plan-label">⬆️ İçe Aktar</label>
+                    <input type="file" id="importPlanInput" accept="application/json" style="display:none;" />
+                    <button id="managePlansBtn" class="manage-plans-btn">🔧 Planları Yönet</button>
                 </div>
             </div>
         </div>
