@@ -574,9 +574,10 @@ class Calendar {
         let eventObj = this.events[this.formatDate(date)];
         if (!eventObj) eventObj = this.getRepeatingEventForDate(date);
         if (eventObj && eventObj.text) {
+            const eventText = (eventObj.text && eventObj.text !== 'undefined') ? eventObj.text : '';
             const eventDetail = document.createElement('div');
             eventDetail.className = 'event-detail';
-            eventDetail.innerHTML = `<strong>Etkinlik:</strong> ${eventObj.text}<br><strong>Kategori:</strong> ${this.getCategoryLabel(eventObj.category)}<br><strong>Tekrar:</strong> ${this.getRepeatLabel(eventObj.repeat)}`;
+            eventDetail.innerHTML = `<strong>Etkinlik:</strong> ${eventText}<br><strong>Kategori:</strong> ${this.getCategoryLabel(eventObj.category)}<br><strong>Tekrar:</strong> ${this.getRepeatLabel(eventObj.repeat)}`;
             if (eventObj.filename && eventObj.file) {
                 eventDetail.innerHTML += `<br><strong>Dosya:</strong> <a href="${eventObj.file}" download="${eventObj.filename}">${eventObj.filename}</a>`;
             }
@@ -748,7 +749,8 @@ class Calendar {
     
     saveEvent() {
         if (!this.selectedDate) return;
-        const eventText = document.getElementById('eventText').value.trim();
+        let eventText = document.getElementById('eventText').value.trim();
+        if (eventText === 'undefined') eventText = '';
         const eventCategory = document.getElementById('eventCategory').value;
         const eventRepeat = document.getElementById('eventRepeat').value;
         const dateKey = this.formatDate(this.selectedDate);
