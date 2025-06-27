@@ -1349,6 +1349,9 @@ class Calendar {
         document.getElementById('monthViewBtn').classList.toggle('active', view === 'month');
         document.getElementById('weekViewBtn').classList.toggle('active', view === 'week');
         document.getElementById('dayViewBtn').classList.toggle('active', view === 'day');
+        // Her görünüm değişiminde bugüne odaklan
+        const now = new Date();
+        this.currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         this.renderCalendar();
     }
 
