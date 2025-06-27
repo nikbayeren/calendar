@@ -9,28 +9,34 @@
 <body>
     <div class="container">
         <header>
-            <div class="top-bar">
+            <div class="top-bar centered-bar">
                 <button id="homeBtn" class="home-btn">🏠 Anasayfa</button>
-                <div class="plan-controls">
-                    <select id="planSelector" class="plan-selector">
+                <div class="plan-controls small-plan-controls">
+                    <select id="planSelector" class="plan-selector small-plan-selector">
                         <option value="default">📅 Ana Plan</option>
                     </select>
-                    <button id="newPlanBtn" class="new-plan-btn">➕ Yeni Plan</button>
-                    <button id="managePlansBtn" class="manage-plans-btn">🔧 Planları Yönet</button>
+                    <button id="newPlanBtn" class="new-plan-btn small-btn">➕ Yeni Plan</button>
+                    <button id="managePlansBtn" class="manage-plans-btn small-btn">🔧 Planları Yönet</button>
                 </div>
                 <button id="themeToggle" class="theme-toggle">🌙</button>
             </div>
-            <h1>Aylık Takvim Planlayıcı</h1>
-            <div class="controls">
+            <h1 class="centered-title">Aylık Takvim Planlayıcı</h1>
+            <div class="controls-row">
                 <button id="prevMonth">&lt;</button>
                 <h2 id="currentMonth">Haziran 2025</h2>
                 <button id="nextMonth">&gt;</button>
-                <button id="monthViewBtn" class="month-view-btn">📆 Ay</button>
-                <button id="weekViewBtn" class="week-view-btn">🗓️ Hafta</button>
-                <button id="dayViewBtn" class="day-view-btn">📖 Gün</button>
-                <button id="yearViewBtn" class="year-view-btn">📅 12 Ay Görünüm</button>
             </div>
-            <div class="header-buttons">
+            <div class="controls-grid">
+                <div class="controls-row">
+                    <button id="monthViewBtn" class="month-view-btn">📆 Ay</button>
+                    <button id="weekViewBtn" class="week-view-btn">🗓️ Hafta</button>
+                </div>
+                <div class="controls-row">
+                    <button id="dayViewBtn" class="day-view-btn">📖 Gün</button>
+                    <button id="yearViewBtn" class="year-view-btn">📅 12 Ay Görünüm</button>
+                </div>
+            </div>
+            <div class="header-buttons" style="justify-content:center; margin-top: 10px;">
                 <div class="export-controls">
                     <button id="exportBtn" class="export-btn">📥 İndir</button>
                     <div id="exportOptions" class="export-options">
@@ -41,7 +47,7 @@
                 </div>
                 <button id="shareBtn" class="share-btn">🔗 Paylaş</button>
             </div>
-            <div class="settings-section">
+            <div class="settings-section" style="margin-top: 10px;">
                 <h3>Ayarlar</h3>
                 <button id="clearData" class="danger-button">Tüm Verileri Temizle</button>
                 <button id="exportData">Verileri Dışa Aktar</button>
@@ -90,8 +96,8 @@
                 </select>
                 <input type="file" id="eventFile" class="event-file" />
                 <div id="eventFileInfo" class="event-file-info"></div>
-                <textarea id="eventText" placeholder="Etkinliğinizi buraya yazın..." maxlength="200"></textarea>
-                <div id="eventCharCount">0/200</div>
+                <textarea id="eventText" placeholder="Etkinliğinizi buraya yazın..." maxlength="500"></textarea>
+                <div id="eventCharCount">0/500</div>
                 <div class="modal-buttons">
                     <button id="saveEvent">Kaydet</button>
                     <button id="deleteEvent">Sil</button>

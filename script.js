@@ -127,15 +127,6 @@ class Calendar {
         document.getElementById('monthViewBtn').addEventListener('click', () => this.switchView('month'));
         document.getElementById('weekViewBtn').addEventListener('click', () => this.switchView('week'));
         document.getElementById('dayViewBtn').addEventListener('click', () => this.switchView('day'));
-
-        // Veri temizleme
-        document.getElementById('clearData').addEventListener('click', () => {
-            if (confirm('Tüm verileriniz silinecek. Bu işlem geri alınamaz. Devam etmek istiyor musunuz?')) {
-                if (confirm('Son kez onaylıyor musunuz? Tüm etkinlikler ve planlar silinecek.')) {
-                    this.clearAllData();
-                }
-            }
-        });
     }
     
     // Paylaşım ID oluştur
@@ -523,12 +514,6 @@ class Calendar {
                 eventPreview.draggable = true;
                 eventPreview.addEventListener('dragstart', (e) => this.dragStart(e, currentDate, eventObj.text));
                 eventPreview.addEventListener('dragend', (e) => this.dragEnd(e));
-            } else {
-                // Boş gün mesajı
-                const emptyMessage = document.createElement('div');
-                emptyMessage.className = 'empty-day-message';
-                emptyMessage.textContent = 'Henüz etkinlik yok';
-                dayElement.appendChild(emptyMessage);
             }
             
             // Günlere drop zone ekle
@@ -588,12 +573,6 @@ class Calendar {
                 eventPreview.draggable = true;
                 eventPreview.addEventListener('dragstart', (e) => this.dragStart(e, currentDate, eventObj.text));
                 eventPreview.addEventListener('dragend', (e) => this.dragEnd(e));
-            } else {
-                // Boş gün mesajı
-                const emptyMessage = document.createElement('div');
-                emptyMessage.className = 'empty-day-message';
-                emptyMessage.textContent = 'Henüz etkinlik yok';
-                dayElement.appendChild(emptyMessage);
             }
             dayElement.addEventListener('dragover', (e) => this.dragOver(e));
             dayElement.addEventListener('drop', (e) => this.drop(e, currentDate));
@@ -728,10 +707,10 @@ class Calendar {
     openEventModal(date) {
         this.selectedDate = date;
         const dateKey = this.formatDate(date);
-        const eventObj = this.events[dateKey] || { text: '', category: 'is', repeat: 'none', file: null, filename: null };
+        const eventObj = this.events[dateKey] || { text: '', category: '', repeat: 'none', file: null, filename: null };
         document.getElementById('modalDate').textContent = `${date.getDate()} ${this.getMonthName(date.getMonth())} ${date.getFullYear()}`;
         document.getElementById('eventText').value = eventObj.text || '';
-        document.getElementById('eventCategory').value = eventObj.category || 'is';
+        document.getElementById('eventCategory').value = eventObj.category || '';
         document.getElementById('eventRepeat').value = eventObj.repeat || 'none';
         document.getElementById('eventModal').style.display = 'block';
         document.getElementById('deleteEvent').style.display = eventObj.text ? 'block' : 'none';
@@ -761,8 +740,17 @@ class Calendar {
         const eventText = document.getElementById('eventText');
         const eventCharCount = document.getElementById('eventCharCount');
         if (eventText && eventCharCount) {
-            eventCharCount.textContent = `${eventText.value.length}/200`;
+            eventCharCount.textContent = `${eventText.value.length}/500`;
+            eventText.maxLength = 500;
             eventText.addEventListener('input', this.updateCharCount);
+        }
+    }
+    
+    updateCharCount() {
+        const eventText = document.getElementById('eventText');
+        const eventCharCount = document.getElementById('eventCharCount');
+        if (eventText && eventCharCount) {
+            eventCharCount.textContent = `${eventText.value.length}/500`;
         }
     }
     
@@ -789,11 +777,10 @@ class Calendar {
         document.getElementById('eventModal').style.display = 'none';
         this.selectedDate = null;
         // Modal inputlarını sıfırla
-        const eventText = document.getElementById('eventText');
-        const eventCharCount = document.getElementById('eventCharCount');
-        if (eventText) eventText.value = '';
-        if (eventCharCount) eventCharCount.textContent = '0/200';
-        if (eventText) eventText.removeEventListener('input', this.updateCharCount);
+        document.getElementById('eventText').value = '';
+        document.getElementById('eventCategory').value = '';
+        document.getElementById('eventRepeat').value = 'none';
+        document.getElementById('eventFile').value = '';
         const fileInfo = document.getElementById('eventFileInfo');
         fileInfo.innerHTML = '';
         fileInfo.dataset.file = '';
@@ -1044,8 +1031,12 @@ class Calendar {
     }
     
     openPlanManagementModal() {
+        this.selectedPlanIdForManage = null; // Seçili planı sıfırla
         this.renderPlansList();
         document.getElementById('planManagementModal').style.display = 'block';
+        // Butonları başta pasif yap
+        document.getElementById('exportPlanBtn').disabled = true;
+        document.getElementById('importPlanInput').disabled = true;
     }
     
     closePlanManagementModal() {
@@ -1055,13 +1046,12 @@ class Calendar {
     renderPlansList() {
         const plansList = document.getElementById('plansList');
         let html = '';
-        
         Object.values(this.plans).forEach(plan => {
             const eventCount = Object.keys(plan.events || {}).length;
             const isActive = plan.id === this.currentPlanId;
-            
+            const isSelected = plan.id === this.selectedPlanIdForManage;
             html += `
-                <div class="plan-item ${isActive ? 'active' : ''}" data-plan-id="${plan.id}">
+                <div class="plan-item ${isActive ? 'active' : ''} ${isSelected ? 'selected-for-manage' : ''}" data-plan-id="${plan.id}" onclick="calendar.selectPlanForManage('${plan.id}')">
                     <div class="plan-info">
                         <div class="plan-name">${plan.name}</div>
                         <div class="plan-description">${plan.description || 'Açıklama yok'}</div>
@@ -1070,245 +1060,31 @@ class Calendar {
                         </div>
                     </div>
                     <div class="plan-actions">
-                        <button class="plan-action-btn edit" onclick="calendar.editPlan('${plan.id}')" title="Düzenle">✏️</button>
-                        <button class="plan-action-btn duplicate" onclick="calendar.duplicatePlan('${plan.id}')" title="Kopyala">📋</button>
-                        ${plan.id !== 'default' ? `<button class="plan-action-btn delete" onclick="calendar.deletePlan('${plan.id}')" title="Sil">🗑️</button>` : ''}
+                        <button class="plan-action-btn edit" onclick="event.stopPropagation();calendar.editPlan('${plan.id}')" title="Düzenle">✏️</button>
+                        <button class="plan-action-btn duplicate" onclick="event.stopPropagation();calendar.duplicatePlan('${plan.id}')" title="Kopyala">📋</button>
+                        ${plan.id !== 'default' ? `<button class="plan-action-btn delete" onclick="event.stopPropagation();calendar.deletePlan('${plan.id}')" title="Sil">🗑️</button>` : ''}
                     </div>
                 </div>
             `;
         });
-        
         plansList.innerHTML = html;
     }
     
-    editPlan(planId) {
-        const plan = this.plans[planId];
-        if (!plan) return;
-        
-        // Form alanlarını doldur
-        document.getElementById('planName').value = plan.name;
-        document.getElementById('planDescription').value = plan.description || '';
-        
-        // Renk seçeneğini işaretle
-        document.querySelectorAll('.color-option').forEach(option => {
-            option.classList.remove('selected');
-        });
-        document.querySelector(`.color-option[data-color="${plan.color}"]`).classList.add('selected');
-        
-        // Modal'ı düzenleme modunda aç
-        document.getElementById('newPlanModal').style.display = 'block';
-        document.getElementById('createPlan').textContent = '✅ Güncelle';
-        document.getElementById('createPlan').onclick = () => this.updatePlan(planId);
+    selectPlanForManage(planId) {
+        this.selectedPlanIdForManage = planId;
+        this.renderPlansList();
+        // Butonları aktif yap
+        document.getElementById('exportPlanBtn').disabled = false;
+        document.getElementById('importPlanInput').disabled = false;
     }
     
-    updatePlan(planId) {
-        const planName = document.getElementById('planName').value.trim();
-        const planDescription = document.getElementById('planDescription').value.trim();
-        const selectedColor = document.querySelector('.color-option.selected')?.dataset.color || 'blue';
-        
-        if (!planName) {
-            this.showNotification('Plan adı gereklidir!', 'error');
-            return;
-        }
-        
-        // Planı güncelle
-        this.plans[planId].name = planName;
-        this.plans[planId].description = planDescription;
-        this.plans[planId].color = selectedColor;
-        
-        this.savePlans();
-        this.updatePlanSelector();
-        this.closeNewPlanModal();
-        
-        // Butonu eski haline getir
-        document.getElementById('createPlan').textContent = '✅ Plan Oluştur';
-        document.getElementById('createPlan').onclick = () => this.createNewPlan();
-        
-        this.showNotification(`"${planName}" planı güncellendi!`);
-        this.applyPlanTheme();
-    }
-    
-    duplicatePlan(planId) {
-        const originalPlan = this.plans[planId];
-        if (!originalPlan) return;
-        
-        const newPlan = {
-            ...originalPlan,
-            id: this.generatePlanId(),
-            name: `${originalPlan.name} (Kopya)`,
-            createdAt: new Date().toISOString()
-        };
-        
-        this.plans[newPlan.id] = newPlan;
-        this.savePlans();
-        this.updatePlanSelector();
-        
-        this.showNotification(`"${originalPlan.name}" planı kopyalandı!`);
-    }
-    
-    deletePlan(planId) {
-        const plan = this.plans[planId];
-        if (!plan || planId === 'default') return;
-        // Ekstra güvenlik: Plan adını yazmasını iste
-        const confirmName = prompt(`"${plan.name}" planını silmek için plan adını tam olarak yazın:`);
-        if (confirmName !== plan.name) {
-            this.showNotification('Plan adı doğru girilmedi, silme iptal edildi!', 'error');
-            return;
-        }
-        if (confirm(`"${plan.name}" planını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-            delete this.plans[planId];
-            this.savePlans();
-            // Eğer silinen plan aktifse, ana plana geç
-            if (this.currentPlanId === planId) {
-                this.switchPlan('default');
-            }
-            this.updatePlanSelector();
-            this.showNotification(`"${plan.name}" planı silindi!`);
-        }
-    }
-    
-    generatePlanId() {
-        return 'plan_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    }
-    
-    updatePlanSelector() {
-        const selector = document.getElementById('planSelector');
-        selector.innerHTML = '';
-        const MAX_LEN = 18;
-        Object.values(this.plans).forEach(plan => {
-            const option = document.createElement('option');
-            option.value = plan.id;
-            let shortName = plan.name;
-            if (plan.name.length > MAX_LEN) {
-                shortName = plan.name.substring(0, MAX_LEN - 3) + '...';
-            }
-            option.textContent = `${this.getPlanColorIcon(plan.color)} ${shortName}`;
-            option.title = plan.name;
-            if (plan.id === this.currentPlanId) {
-                option.selected = true;
-            }
-            selector.appendChild(option);
-        });
-    }
-    
-    getPlanColorIcon(color) {
-        const colorIcons = {
-            blue: '🔵',
-            green: '🟢', 
-            purple: '🟣',
-            orange: '🟠',
-            red: '🔴',
-            pink: '🩷'
-        };
-        return colorIcons[color] || '🔵';
-    }
-    
-    saveCurrentPlan() {
-        if (this.currentPlanId && this.plans[this.currentPlanId]) {
-            this.plans[this.currentPlanId].events = { ...this.events };
-            this.savePlans();
-        }
-    }
-    
-    savePlans() {
-        localStorage.setItem('calendarPlans', JSON.stringify(this.plans));
-    }
-    
-    loadPlans() {
-        const saved = localStorage.getItem('calendarPlans');
-        if (saved) {
-            const plans = JSON.parse(saved);
-            // Varsayılan plan yoksa oluştur
-            if (!plans.default) {
-                plans.default = {
-                    id: 'default',
-                    name: 'Ana Plan',
-                    description: 'Varsayılan takvim planı',
-                    color: 'blue',
-                    createdAt: new Date().toISOString(),
-                    events: {}
-                };
-            }
-            return plans;
-        } else {
-            // İlk kez açılıyorsa varsayılan planı oluştur
-            return {
-                default: {
-                    id: 'default',
-                    name: 'Ana Plan',
-                    description: 'Varsayılan takvim planı',
-                    color: 'blue',
-                    createdAt: new Date().toISOString(),
-                    events: {}
-                }
-            };
-        }
-    }
-
-    bindColorOptions() {
-        document.querySelectorAll('.color-option').forEach(option => {
-            option.addEventListener('click', () => {
-                // Önceki seçimi kaldır
-                document.querySelectorAll('.color-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
-                // Yeni seçimi işaretle
-                option.classList.add('selected');
-            });
-        });
-    }
-
-    getPlanMainColor(plan) {
-        // Plan renk ana kodları
-        const colorMap = {
-            blue:   { bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', solid: '#4facfe' },
-            green:  { bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', solid: '#43e97b' },
-            purple: { bg: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', solid: '#a18cd1' },
-            orange: { bg: 'linear-gradient(135deg, #f7971e 0%, #ffd200 100%)', solid: '#f7971e' },
-            red:    { bg: 'linear-gradient(135deg, #f857a6 0%, #ff5858 100%)', solid: '#f857a6' },
-            pink:   { bg: 'linear-gradient(135deg, #f953c6 0%, #b91d73 100%)', solid: '#f953c6' },
-        };
-        return colorMap[plan?.color] || colorMap.blue;
-    }
-
-    applyPlanTheme() {
-        const plan = this.plans[this.currentPlanId];
-        const color = this.getPlanMainColor(plan);
-        
-        // Header arka planı
-        const header = document.querySelector('header');
-        header.style.background = color.bg;
-        
-        // Takvim arka planı - daha hafif bir renk
-        const calendar = document.querySelector('.calendar');
-        calendar.style.background = `linear-gradient(135deg, ${color.solid}15 0%, ${color.solid}25 100%)`;
-        calendar.style.border = `2px solid ${color.solid}30`;
-        
-        // Plan seçici arka planı
-        const planSelector = document.getElementById('planSelector');
-        if (planSelector) {
-            planSelector.style.background = `${color.solid}20`;
-            planSelector.style.border = `1px solid ${color.solid}40`;
-        }
-        
-        // Butonların renklerini güncelle
-        const newPlanBtn = document.getElementById('newPlanBtn');
-        if (newPlanBtn) {
-            newPlanBtn.style.background = color.bg;
-        }
-        
-        const managePlansBtn = document.getElementById('managePlansBtn');
-        if (managePlansBtn) {
-            managePlansBtn.style.background = color.bg;
-        }
-    }
-
     exportCurrentPlan() {
-        const plan = this.plans[this.currentPlanId];
-        if (!plan) {
-            this.showNotification('Plan bulunamadı!', 'error');
+        const planId = this.selectedPlanIdForManage;
+        if (!planId || !this.plans[planId]) {
+            this.showNotification('Lütfen önce bir plan seçin!', 'error');
             return;
         }
+        const plan = this.plans[planId];
         const dataStr = JSON.stringify(plan, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -1321,33 +1097,30 @@ class Calendar {
         URL.revokeObjectURL(url);
         this.showNotification('Plan başarıyla dışa aktarıldı!');
     }
-
+    
     importPlanFromFile(e) {
+        const planId = this.selectedPlanIdForManage;
+        if (!planId || !this.plans[planId]) {
+            this.showNotification('Lütfen önce bir plan seçin!', 'error');
+            return;
+        }
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (evt) => {
             try {
                 const importedPlan = JSON.parse(evt.target.result);
-                if (!importedPlan.id || !importedPlan.name) {
-                    this.showNotification('Geçersiz plan dosyası!', 'error');
-                    return;
-                }
-                // ID çakışmasın diye yeni bir ID ver
-                importedPlan.id = this.generatePlanId();
-                importedPlan.name = importedPlan.name + ' (İçe Aktarılan)';
-                importedPlan.createdAt = new Date().toISOString();
-                this.plans[importedPlan.id] = importedPlan;
+                // Sadece etkinlikler güncellensin
+                this.plans[planId].events = importedPlan.events || {};
                 this.savePlans();
                 this.updatePlanSelector();
                 this.renderPlansList();
-                this.showNotification('Plan başarıyla içe aktarıldı!');
+                this.showNotification('Plan etkinlikleri başarıyla içe aktarıldı!');
             } catch (err) {
                 this.showNotification('Plan dosyası okunamadı!', 'error');
             }
         };
         reader.readAsText(file);
-        // input'u sıfırla
         e.target.value = '';
     }
 
@@ -1441,210 +1214,48 @@ class Calendar {
         }, 60 * 1000); // Her dakika kontrol et
     }
 
-    updateCharCount() {
-        const eventText = document.getElementById('eventText');
-        const eventCharCount = document.getElementById('eventCharCount');
-        if (eventText && eventCharCount) {
-            eventCharCount.textContent = `${eventText.value.length}/200`;
+    loadPlans() {
+        // localStorage'dan planları yükle
+        const saved = localStorage.getItem('calendarPlans');
+        if (saved) {
+            return JSON.parse(saved);
         }
+        // Varsayılan plan
+        return {
+            default: {
+                id: 'default',
+                name: 'Ana Plan',
+                description: '',
+                color: 'blue',
+                createdAt: new Date().toISOString(),
+                events: {}
+            }
+        };
     }
 
-    // Yıl görünümü
-    renderYearView() {
-        const yearView = document.getElementById('yearView');
-        yearView.innerHTML = '';
-        
-        const months = [
-            'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-            'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-        ];
-        
-        months.forEach((monthName, monthIndex) => {
-            const monthBox = document.createElement('div');
-            monthBox.className = 'year-month-box';
-            monthBox.textContent = monthName;
-            
-            // Ayın etkinliklerini kontrol et ve plan rengini belirle
-            const monthEvents = this.getMonthEvents(monthIndex);
-            if (monthEvents.length > 0) {
-                // İlk etkinliğin plan rengini kullan
-                const firstEvent = monthEvents[0];
-                const planColor = this.getPlanColor(firstEvent.planId);
-                if (planColor) {
-                    monthBox.style.backgroundColor = planColor;
-                    monthBox.style.color = '#fff';
-                }
-            }
-            
-            monthBox.addEventListener('click', () => {
-                this.currentDate = new Date(this.currentDate.getFullYear(), monthIndex, 1);
-                this.showMonthView();
-            });
-            
-            yearView.appendChild(monthBox);
+    savePlans() {
+        localStorage.setItem('calendarPlans', JSON.stringify(this.plans));
+    }
+
+    updatePlanSelector() {
+        // Plan seçiciyi güncelle
+        const selector = document.getElementById('planSelector');
+        if (!selector) return;
+        selector.innerHTML = '';
+        Object.values(this.plans).forEach(plan => {
+            const option = document.createElement('option');
+            option.value = plan.id;
+            option.textContent = `📅 ${plan.name}`;
+            selector.appendChild(option);
         });
+        selector.value = this.currentPlanId;
     }
 
-    // Ayın etkinliklerini getir
-    getMonthEvents(monthIndex) {
-        const year = this.currentDate.getFullYear();
-        const monthEvents = [];
-        
-        for (let day = 1; day <= 31; day++) {
-            const date = new Date(year, monthIndex, day);
-            const dateStr = date.toISOString().split('T')[0];
-            const dayEvents = this.events[dateStr] || [];
-            monthEvents.push(...dayEvents);
+    saveCurrentPlan() {
+        if (this.currentPlanId && this.plans[this.currentPlanId]) {
+            this.plans[this.currentPlanId].events = this.events;
+            this.savePlans();
         }
-        
-        return monthEvents;
-    }
-
-    // Plan rengini getir
-    getPlanColor(planId) {
-        const plan = this.plans.find(p => p.id === planId);
-        return plan ? plan.color : null;
-    }
-
-    // Veri saklama
-    saveData() {
-        const data = {
-            events: this.events,
-            plans: this.plans,
-            currentPlanId: this.currentPlanId,
-            theme: this.theme
-        };
-        
-        // IndexedDB kullan
-        this.saveToIndexedDB(data);
-    }
-
-    // IndexedDB'ye kaydet
-    saveToIndexedDB(data) {
-        const request = indexedDB.open('CalendarDB', 1);
-        
-        request.onerror = () => {
-            console.error('IndexedDB hatası:', request.error);
-            // Fallback olarak localStorage kullan
-            localStorage.setItem('calendarData', JSON.stringify(data));
-        };
-        
-        request.onsuccess = (event) => {
-            const db = event.target.result;
-            const transaction = db.transaction(['calendarData'], 'readwrite');
-            const store = transaction.objectStore('calendarData');
-            
-            const saveRequest = store.put(data, 'main');
-            saveRequest.onsuccess = () => {
-                console.log('Veri IndexedDB\'ye kaydedildi');
-            };
-            saveRequest.onerror = () => {
-                console.error('Kaydetme hatası:', saveRequest.error);
-                // Fallback olarak localStorage kullan
-                localStorage.setItem('calendarData', JSON.stringify(data));
-            };
-        };
-        
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains('calendarData')) {
-                db.createObjectStore('calendarData');
-            }
-        };
-    }
-
-    // Veri yükleme
-    loadData() {
-        // Önce IndexedDB'den yüklemeyi dene
-        this.loadFromIndexedDB();
-    }
-
-    // IndexedDB'den yükle
-    loadFromIndexedDB() {
-        const request = indexedDB.open('CalendarDB', 1);
-        
-        request.onerror = () => {
-            console.error('IndexedDB hatası:', request.error);
-            // Fallback olarak localStorage kullan
-            this.loadFromLocalStorage();
-        };
-        
-        request.onsuccess = (event) => {
-            const db = event.target.result;
-            const transaction = db.transaction(['calendarData'], 'readonly');
-            const store = transaction.objectStore('calendarData');
-            
-            const getRequest = store.get('main');
-            getRequest.onsuccess = () => {
-                if (getRequest.result) {
-                    this.events = getRequest.result.events || {};
-                    this.plans = getRequest.result.plans || [];
-                    this.currentPlanId = getRequest.result.currentPlanId || null;
-                    this.theme = getRequest.result.theme || 'light';
-                    console.log('Veri IndexedDB\'den yüklendi');
-                } else {
-                    // IndexedDB'de veri yoksa localStorage'dan yükle
-                    this.loadFromLocalStorage();
-                }
-                this.initializeCalendar();
-            };
-            getRequest.onerror = () => {
-                console.error('Yükleme hatası:', getRequest.error);
-                // Fallback olarak localStorage kullan
-                this.loadFromLocalStorage();
-            };
-        };
-        
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains('calendarData')) {
-                db.createObjectStore('calendarData');
-            }
-        };
-    }
-
-    // LocalStorage'dan yükle (fallback)
-    loadFromLocalStorage() {
-        const savedData = localStorage.getItem('calendarData');
-        if (savedData) {
-            try {
-                const data = JSON.parse(savedData);
-                this.events = data.events || {};
-                this.plans = data.plans || [];
-                this.currentPlanId = data.currentPlanId || null;
-                this.theme = data.theme || 'light';
-                console.log('Veri localStorage\'dan yüklendi');
-            } catch (error) {
-                console.error('Veri yükleme hatası:', error);
-            }
-        }
-        this.initializeCalendar();
-    }
-
-    // Tüm verileri temizle
-    clearAllData() {
-        // IndexedDB'yi temizle
-        const request = indexedDB.open('CalendarDB', 1);
-        request.onsuccess = (event) => {
-            const db = event.target.result;
-            const transaction = db.transaction(['calendarData'], 'readwrite');
-            const store = transaction.objectStore('calendarData');
-            store.clear();
-        };
-        
-        // LocalStorage'ı temizle
-        localStorage.removeItem('calendarData');
-        
-        // Belleği temizle
-        this.events = {};
-        this.plans = [];
-        this.currentPlanId = null;
-        
-        // Takvimi yenile
-        this.renderCalendar();
-        this.renderPlans();
-        
-        alert('Tüm veriler başarıyla temizlendi.');
     }
 }
 
