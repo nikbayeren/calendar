@@ -1,6 +1,6 @@
 class Calendar {
     constructor() {
-        this.currentDate = new Date(2025, 5, 27); // 27 Haziran 2025
+        this.currentDate = new Date(); // Kullanıcının saat dilimine göre bugünün tarihi
         this.events = this.loadEvents();
         this.selectedDate = null;
         this.draggedEvent = null;
