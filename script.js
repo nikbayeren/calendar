@@ -1346,10 +1346,9 @@ class Calendar {
 }
 
 // Global calendar instance
-let calendar;
+// let calendar;
 
-// Takvimi başlat
 document.addEventListener('DOMContentLoaded', () => {
-    calendar = new Calendar();
+    window.calendar = new Calendar();
     calendar.loadTheme();
 }); 
