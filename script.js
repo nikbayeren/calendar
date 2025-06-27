@@ -214,6 +214,7 @@ class Calendar {
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+            doc.setFont('helvetica', 'normal'); // Türkçe karakter desteği
             doc.setFontSize(20);
             doc.text('Takvim Etkinlikleri', 20, 20);
             doc.setFontSize(12);
