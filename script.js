@@ -14,6 +14,7 @@ class Calendar {
         this.loadFromURL(); // URL'den veri yükle
         this.renderCalendar();
         this.bindEvents();
+        this.checkEditMode();
     }
     
     bindEvents() {
@@ -41,7 +42,8 @@ class Calendar {
         document.getElementById('shareBtn').addEventListener('click', () => this.openShareModal());
         document.getElementById('closeShareModal').addEventListener('click', () => this.closeShareModal());
         document.getElementById('copyLink').addEventListener('click', () => this.copyShareLink());
-        document.getElementById('generateNewLink').addEventListener('click', () => this.generateNewShareLink());
+        document.getElementById('generateViewLink').addEventListener('click', () => this.generateShareLinkWithMode('view'));
+        document.getElementById('generateEditLink').addEventListener('click', () => this.generateShareLinkWithMode('edit'));
         
         // Modal dışına tıklayınca kapat
         window.addEventListener('click', (e) => {
@@ -108,12 +110,16 @@ class Calendar {
         document.getElementById('shareModal').style.display = 'none';
     }
     
-    // Paylaşım linki oluştur
-    generateShareLink() {
+    // Paylaşım linki oluştur (yetki ile)
+    generateShareLinkWithMode(mode) {
         const eventsData = JSON.stringify(this.events);
         const encodedData = encodeURIComponent(eventsData);
         const baseUrl = window.location.origin + window.location.pathname;
-        return `${baseUrl}?share=${encodedData}`;
+        let link = `${baseUrl}?share=${encodedData}`;
+        if (mode === 'view') link += '&mode=view';
+        else link += '&mode=edit';
+        document.getElementById('shareLink').value = link;
+        this.showNotification(mode === 'view' ? 'Sadece görüntüleme linki oluşturuldu!' : 'Düzenleme linki oluşturuldu!');
     }
     
     // Linki kopyala
@@ -133,14 +139,6 @@ class Calendar {
                 this.showNotification('Link kopyalanamadı!', 'error');
             });
         }
-    }
-    
-    // Yeni paylaşım linki oluştur
-    generateNewShareLink() {
-        this.shareId = this.generateShareId();
-        const shareLink = this.generateShareLink();
-        document.getElementById('shareLink').value = shareLink;
-        this.showNotification('Yeni paylaşım linki oluşturuldu!');
     }
     
     // İndirme menüsünü aç/kapat
@@ -611,6 +609,20 @@ class Calendar {
     loadEvents() {
         const saved = localStorage.getItem('calendarEvents');
         return saved ? JSON.parse(saved) : {};
+    }
+    
+    // Uygulama açılırken yetki kontrolü
+    checkEditMode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+        if (mode === 'view') {
+            // Tüm düzenleme butonlarını ve inputları devre dışı bırak
+            document.querySelectorAll('.day').forEach(day => day.style.pointerEvents = 'none');
+            document.getElementById('searchInput').disabled = true;
+            document.getElementById('searchBtn').disabled = true;
+            document.getElementById('exportBtn').disabled = true;
+            document.getElementById('shareBtn').disabled = true;
+        }
     }
 }
 
