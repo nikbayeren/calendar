@@ -682,7 +682,7 @@ class Calendar {
         const dateKey = this.formatDate(date);
         const eventObj = this.events[dateKey] || { text: '', category: 'is', repeat: 'none', file: null, filename: null };
         document.getElementById('modalDate').textContent = `${date.getDate()} ${this.getMonthName(date.getMonth())} ${date.getFullYear()}`;
-        document.getElementById('eventText').value = eventObj.text;
+        document.getElementById('eventText').value = eventObj.text || '';
         document.getElementById('eventCategory').value = eventObj.category || 'is';
         document.getElementById('eventRepeat').value = eventObj.repeat || 'none';
         document.getElementById('eventModal').style.display = 'block';
@@ -733,6 +733,15 @@ class Calendar {
     closeModal() {
         document.getElementById('eventModal').style.display = 'none';
         this.selectedDate = null;
+        // Modal inputlarını sıfırla
+        document.getElementById('eventText').value = '';
+        document.getElementById('eventCategory').value = 'is';
+        document.getElementById('eventRepeat').value = 'none';
+        document.getElementById('eventFile').value = '';
+        const fileInfo = document.getElementById('eventFileInfo');
+        fileInfo.innerHTML = '';
+        fileInfo.dataset.file = '';
+        fileInfo.dataset.filename = '';
     }
     
     saveEvent() {
