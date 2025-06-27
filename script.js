@@ -214,25 +214,23 @@ class Calendar {
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            
-            // Başlık
             doc.setFontSize(20);
             doc.text('Takvim Etkinlikleri', 20, 20);
-            
-            // Tarih
             doc.setFontSize(12);
             doc.text(`Oluşturulma Tarihi: ${new Date().toLocaleDateString('tr-TR')}`, 20, 30);
-            
-            // Etkinlikleri tablo halinde ekle
-            const events = this.getEventsForExport();
+            const startInput = document.getElementById('pdfStartDate');
+            const endInput = document.getElementById('pdfEndDate');
+            let startDate = startInput && startInput.value ? new Date(startInput.value) : null;
+            let endDate = endInput && endInput.value ? new Date(endInput.value) : null;
+            if (endDate) endDate.setHours(23,59,59,999);
+            const events = this.getEventsForExport(startDate, endDate);
             if (events.length === 0) {
                 doc.text('Henüz etkinlik eklenmemiş.', 20, 50);
             } else {
                 const tableData = events.map(event => [
                     event.date,
-                    event.text
+                    typeof event.text === 'object' && event.text !== null ? (event.text.text || JSON.stringify(event.text)) : event.text
                 ]);
-                
                 doc.autoTable({
                     startY: 40,
                     head: [['Tarih', 'Etkinlik']],
@@ -247,11 +245,8 @@ class Calendar {
                     }
                 });
             }
-            
-            // PDF'i indir
             const fileName = `takvim_etkinlikleri_${new Date().toISOString().split('T')[0]}.pdf`;
             doc.save(fileName);
-            
             this.showNotification('PDF başarıyla indirildi!');
         } catch (error) {
             console.error('PDF oluşturma hatası:', error);
@@ -262,38 +257,30 @@ class Calendar {
     // Excel İndirme
     exportToExcel() {
         try {
-            const events = this.getEventsForExport();
-            
-            // Excel çalışma kitabı oluştur
+            const startInput = document.getElementById('pdfStartDate');
+            const endInput = document.getElementById('pdfEndDate');
+            let startDate = startInput && startInput.value ? new Date(startInput.value) : null;
+            let endDate = endInput && endInput.value ? new Date(endInput.value) : null;
+            if (endDate) endDate.setHours(23,59,59,999);
+            const events = this.getEventsForExport(startDate, endDate);
             const wb = XLSX.utils.book_new();
-            
-            // Veri hazırla
             const data = [
                 ['Tarih', 'Etkinlik', 'Oluşturulma Tarihi'],
                 ...events.map(event => [
                     event.date,
-                    event.text,
+                    typeof event.text === 'object' && event.text !== null ? (event.text.text || JSON.stringify(event.text)) : event.text,
                     new Date().toLocaleDateString('tr-TR')
                 ])
             ];
-            
-            // Çalışma sayfası oluştur
             const ws = XLSX.utils.aoa_to_sheet(data);
-            
-            // Sütun genişliklerini ayarla
             ws['!cols'] = [
-                { width: 15 }, // Tarih
-                { width: 50 }, // Etkinlik
-                { width: 20 }  // Oluşturulma tarihi
+                { width: 15 },
+                { width: 50 },
+                { width: 20 }
             ];
-            
-            // Çalışma sayfasını kitaba ekle
             XLSX.utils.book_append_sheet(wb, ws, 'Takvim Etkinlikleri');
-            
-            // Excel dosyasını indir
             const fileName = `takvim_etkinlikleri_${new Date().toISOString().split('T')[0]}.xlsx`;
             XLSX.writeFile(wb, fileName);
-            
             this.showNotification('Excel dosyası başarıyla indirildi!');
         } catch (error) {
             console.error('Excel oluşturma hatası:', error);
@@ -304,22 +291,24 @@ class Calendar {
     // Metin İndirme
     exportToText() {
         try {
-            const events = this.getEventsForExport();
-            
+            const startInput = document.getElementById('pdfStartDate');
+            const endInput = document.getElementById('pdfEndDate');
+            let startDate = startInput && startInput.value ? new Date(startInput.value) : null;
+            let endDate = endInput && endInput.value ? new Date(endInput.value) : null;
+            if (endDate) endDate.setHours(23,59,59,999);
+            const events = this.getEventsForExport(startDate, endDate);
             let content = 'TAKVİM ETKİNLİKLERİ\n';
             content += '='.repeat(50) + '\n\n';
             content += `Oluşturulma Tarihi: ${new Date().toLocaleDateString('tr-TR')}\n\n`;
-            
             if (events.length === 0) {
                 content += 'Henüz etkinlik eklenmemiş.\n';
             } else {
                 events.forEach((event, index) => {
+                    let text = typeof event.text === 'object' && event.text !== null ? (event.text.text || JSON.stringify(event.text)) : event.text;
                     content += `${index + 1}. ${event.date}\n`;
-                    content += `   ${event.text}\n\n`;
+                    content += `   ${text}\n\n`;
                 });
             }
-            
-            // Metin dosyasını indir
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -329,7 +318,6 @@ class Calendar {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
             this.showNotification('Metin dosyası başarıyla indirildi!');
         } catch (error) {
             console.error('Metin dosyası oluşturma hatası:', error);
@@ -338,20 +326,19 @@ class Calendar {
     }
     
     // İndirme için etkinlik verilerini hazırla
-    getEventsForExport() {
+    getEventsForExport(startDate = null, endDate = null) {
         const events = [];
-        
         Object.keys(this.events).forEach(dateKey => {
             const date = new Date(dateKey);
+            if (startDate && date < startDate) return;
+            if (endDate && date > endDate) return;
             const dateStr = `${date.getDate()} ${this.getMonthName(date.getMonth())} ${date.getFullYear()}`;
-            
             events.push({
                 date: dateStr,
                 text: this.events[dateKey],
                 originalDate: date
             });
         });
-        
         // Tarihe göre sırala
         return events.sort((a, b) => a.originalDate - b.originalDate);
     }
