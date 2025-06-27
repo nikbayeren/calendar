@@ -209,6 +209,17 @@ class Calendar {
         options.classList.toggle('show');
     }
     
+    // Etkinlik metnini güvenli şekilde string olarak döndür
+    getEventText(event) {
+        if (!event) return '';
+        if (typeof event.text === 'string') return event.text;
+        if (typeof event.text === 'object' && event.text !== null) {
+            if ('text' in event.text) return event.text.text;
+            return JSON.stringify(event.text);
+        }
+        return '';
+    }
+    
     // PDF İndirme
     exportToPDF() {
         try {
@@ -230,7 +241,7 @@ class Calendar {
             } else {
                 const tableData = events.map(event => [
                     event.date,
-                    typeof event.text === 'object' && event.text !== null ? (event.text.text || JSON.stringify(event.text)) : event.text
+                    getEventText(event)
                 ]);
                 doc.autoTable({
                     startY: 40,
@@ -269,7 +280,7 @@ class Calendar {
                 ['Tarih', 'Etkinlik', 'Oluşturulma Tarihi'],
                 ...events.map(event => [
                     event.date,
-                    typeof event.text === 'object' && event.text !== null ? (event.text.text || JSON.stringify(event.text)) : event.text,
+                    getEventText(event),
                     new Date().toLocaleDateString('tr-TR')
                 ])
             ];
@@ -305,7 +316,7 @@ class Calendar {
                 content += 'Henüz etkinlik eklenmemiş.\n';
             } else {
                 events.forEach((event, index) => {
-                    let text = typeof event.text === 'object' && event.text !== null ? (event.text.text || JSON.stringify(event.text)) : event.text;
+                    let text = getEventText(event);
                     content += `${index + 1}. ${event.date}\n`;
                     content += `   ${text}\n\n`;
                 });
