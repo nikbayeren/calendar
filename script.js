@@ -1101,12 +1101,24 @@ class Calendar {
         Object.values(this.plans).forEach(plan => {
             const option = document.createElement('option');
             option.value = plan.id;
-            option.textContent = plan.name;
+            option.textContent = `${this.getPlanColorIcon(plan.color)} ${plan.name}`;
             if (plan.id === this.currentPlanId) {
                 option.selected = true;
             }
             selector.appendChild(option);
         });
+    }
+    
+    getPlanColorIcon(color) {
+        const colorIcons = {
+            blue: '🔵',
+            green: '🟢', 
+            purple: '🟣',
+            orange: '🟠',
+            red: '🔴',
+            pink: '🩷'
+        };
+        return colorIcons[color] || '🔵';
     }
     
     saveCurrentPlan() {
@@ -1180,10 +1192,33 @@ class Calendar {
     applyPlanTheme() {
         const plan = this.plans[this.currentPlanId];
         const color = this.getPlanMainColor(plan);
+        
         // Header arka planı
-        document.querySelector('header').style.background = color.bg;
-        // Takvim arka planı
-        document.querySelector('.calendar').style.background = color.bg;
+        const header = document.querySelector('header');
+        header.style.background = color.bg;
+        
+        // Takvim arka planı - daha hafif bir renk
+        const calendar = document.querySelector('.calendar');
+        calendar.style.background = `linear-gradient(135deg, ${color.solid}15 0%, ${color.solid}25 100%)`;
+        calendar.style.border = `2px solid ${color.solid}30`;
+        
+        // Plan seçici arka planı
+        const planSelector = document.getElementById('planSelector');
+        if (planSelector) {
+            planSelector.style.background = `${color.solid}20`;
+            planSelector.style.border = `1px solid ${color.solid}40`;
+        }
+        
+        // Butonların renklerini güncelle
+        const newPlanBtn = document.getElementById('newPlanBtn');
+        if (newPlanBtn) {
+            newPlanBtn.style.background = color.bg;
+        }
+        
+        const managePlansBtn = document.getElementById('managePlansBtn');
+        if (managePlansBtn) {
+            managePlansBtn.style.background = color.bg;
+        }
     }
 
     exportCurrentPlan() {
