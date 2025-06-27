@@ -1257,6 +1257,34 @@ class Calendar {
             this.savePlans();
         }
     }
+
+    bindColorOptions() {
+        const colorOptions = document.querySelectorAll('.color-option');
+        colorOptions.forEach(option => {
+            option.onclick = () => {
+                colorOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+            };
+        });
+    }
+
+    applyPlanTheme() {
+        const plan = this.plans[this.currentPlanId];
+        if (!plan) return;
+        const colorMap = {
+            blue: '#4facfe',
+            green: '#4CAF50',
+            purple: '#9C27B0',
+            orange: '#FF9800',
+            red: '#F44336',
+            pink: '#E91E63'
+        };
+        document.querySelector('header').style.background = `linear-gradient(135deg, ${colorMap[plan.color] || '#4facfe'} 0%, #00f2fe 100%)`;
+    }
+
+    generatePlanId() {
+        return 'plan_' + Math.random().toString(36).substr(2, 9);
+    }
 }
 
 // Global calendar instance
