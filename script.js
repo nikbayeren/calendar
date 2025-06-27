@@ -25,6 +25,7 @@ class Calendar {
         this.checkTodayEventsForNotification();
         // Gün değişimini otomatik algıla
         this.startDayChangeWatcher();
+        this.loadTheme(); // Otomatik tema yükle
     }
     
     bindEvents() {
@@ -69,14 +70,37 @@ class Calendar {
             }
         });
         
-        // ESC tuşu ile modal kapatma
+        // Klavye kısayolları
         document.addEventListener('keydown', (e) => {
+            // Modal açıksa ve ESC'ye basılırsa kapat
             if (e.key === 'Escape') {
                 this.closeModal();
                 this.closeShareModal();
                 this.closeNewPlanModal();
                 this.closePlanManagementModal();
                 document.getElementById('exportOptions').classList.remove('show');
+            }
+            // E ile etkinlik ekle (modal kapalıysa)
+            if (e.key.toLowerCase() === 'e' && !document.getElementById('eventModal').style.display.includes('block')) {
+                this.openEventModal(new Date(this.currentDate));
+            }
+            // Ctrl+F ile arama inputuna odaklan
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+            // Ok tuşlarıyla ay/hafta/gün değişimi
+            if (e.key === 'ArrowLeft') {
+                this.previousMonth();
+            }
+            if (e.key === 'ArrowRight') {
+                this.nextMonth();
+            }
+            if (e.key === 'ArrowUp') {
+                this.switchView('week');
+            }
+            if (e.key === 'ArrowDown') {
+                this.switchView('day');
             }
         });
 
@@ -103,6 +127,15 @@ class Calendar {
         document.getElementById('monthViewBtn').addEventListener('click', () => this.switchView('month'));
         document.getElementById('weekViewBtn').addEventListener('click', () => this.switchView('week'));
         document.getElementById('dayViewBtn').addEventListener('click', () => this.switchView('day'));
+
+        // Veri temizleme
+        document.getElementById('clearData').addEventListener('click', () => {
+            if (confirm('Tüm verileriniz silinecek. Bu işlem geri alınamaz. Devam etmek istiyor musunuz?')) {
+                if (confirm('Son kez onaylıyor musunuz? Tüm etkinlikler ve planlar silinecek.')) {
+                    this.clearAllData();
+                }
+            }
+        });
     }
     
     // Paylaşım ID oluştur
@@ -490,6 +523,12 @@ class Calendar {
                 eventPreview.draggable = true;
                 eventPreview.addEventListener('dragstart', (e) => this.dragStart(e, currentDate, eventObj.text));
                 eventPreview.addEventListener('dragend', (e) => this.dragEnd(e));
+            } else {
+                // Boş gün mesajı
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'empty-day-message';
+                emptyMessage.textContent = 'Henüz etkinlik yok';
+                dayElement.appendChild(emptyMessage);
             }
             
             // Günlere drop zone ekle
@@ -549,6 +588,12 @@ class Calendar {
                 eventPreview.draggable = true;
                 eventPreview.addEventListener('dragstart', (e) => this.dragStart(e, currentDate, eventObj.text));
                 eventPreview.addEventListener('dragend', (e) => this.dragEnd(e));
+            } else {
+                // Boş gün mesajı
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'empty-day-message';
+                emptyMessage.textContent = 'Henüz etkinlik yok';
+                dayElement.appendChild(emptyMessage);
             }
             dayElement.addEventListener('dragover', (e) => this.dragOver(e));
             dayElement.addEventListener('drop', (e) => this.drop(e, currentDate));
@@ -712,6 +757,13 @@ class Calendar {
             copyBtn.onclick = () => this.openCopyEventToPlanMenu(dateKey);
             document.querySelector('.modal-buttons').appendChild(copyBtn);
         }
+        // Karakter sayacı başlat
+        const eventText = document.getElementById('eventText');
+        const eventCharCount = document.getElementById('eventCharCount');
+        if (eventText && eventCharCount) {
+            eventCharCount.textContent = `${eventText.value.length}/200`;
+            eventText.addEventListener('input', this.updateCharCount);
+        }
     }
     
     openCopyEventToPlanMenu(dateKey) {
@@ -737,10 +789,11 @@ class Calendar {
         document.getElementById('eventModal').style.display = 'none';
         this.selectedDate = null;
         // Modal inputlarını sıfırla
-        document.getElementById('eventText').value = '';
-        document.getElementById('eventCategory').value = 'is';
-        document.getElementById('eventRepeat').value = 'none';
-        document.getElementById('eventFile').value = '';
+        const eventText = document.getElementById('eventText');
+        const eventCharCount = document.getElementById('eventCharCount');
+        if (eventText) eventText.value = '';
+        if (eventCharCount) eventCharCount.textContent = '0/200';
+        if (eventText) eventText.removeEventListener('input', this.updateCharCount);
         const fileInfo = document.getElementById('eventFileInfo');
         fileInfo.innerHTML = '';
         fileInfo.dataset.file = '';
@@ -831,7 +884,7 @@ class Calendar {
         }
     }
 
-    // Tema değiştir
+    // Tema değiştir (manuel override)
     toggleTheme() {
         document.body.classList.toggle('dark');
         // Tercihi localStorage'a kaydet
@@ -841,9 +894,17 @@ class Calendar {
         this.applyPlanTheme();
     }
 
-    // Tema tercihini yükle
+    // Tema tercihini yükle ve uygula
     loadTheme() {
-        const theme = localStorage.getItem('calendarTheme');
+        let theme = localStorage.getItem('calendarTheme');
+        if (!theme) {
+            // Sistem temasını algıla
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                theme = 'dark';
+            } else {
+                theme = 'light';
+            }
+        }
         if (theme === 'dark') {
             document.body.classList.add('dark');
             document.getElementById('themeToggle').textContent = '☀️';
@@ -1088,16 +1149,19 @@ class Calendar {
     deletePlan(planId) {
         const plan = this.plans[planId];
         if (!plan || planId === 'default') return;
-        
+        // Ekstra güvenlik: Plan adını yazmasını iste
+        const confirmName = prompt(`"${plan.name}" planını silmek için plan adını tam olarak yazın:`);
+        if (confirmName !== plan.name) {
+            this.showNotification('Plan adı doğru girilmedi, silme iptal edildi!', 'error');
+            return;
+        }
         if (confirm(`"${plan.name}" planını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
             delete this.plans[planId];
             this.savePlans();
-            
             // Eğer silinen plan aktifse, ana plana geç
             if (this.currentPlanId === planId) {
                 this.switchPlan('default');
             }
-            
             this.updatePlanSelector();
             this.showNotification(`"${plan.name}" planı silindi!`);
         }
@@ -1110,11 +1174,16 @@ class Calendar {
     updatePlanSelector() {
         const selector = document.getElementById('planSelector');
         selector.innerHTML = '';
-        
+        const MAX_LEN = 18;
         Object.values(this.plans).forEach(plan => {
             const option = document.createElement('option');
             option.value = plan.id;
-            option.textContent = `${this.getPlanColorIcon(plan.color)} ${plan.name}`;
+            let shortName = plan.name;
+            if (plan.name.length > MAX_LEN) {
+                shortName = plan.name.substring(0, MAX_LEN - 3) + '...';
+            }
+            option.textContent = `${this.getPlanColorIcon(plan.color)} ${shortName}`;
+            option.title = plan.name;
             if (plan.id === this.currentPlanId) {
                 option.selected = true;
             }
@@ -1370,6 +1439,212 @@ class Calendar {
                 this.renderCalendar();
             }
         }, 60 * 1000); // Her dakika kontrol et
+    }
+
+    updateCharCount() {
+        const eventText = document.getElementById('eventText');
+        const eventCharCount = document.getElementById('eventCharCount');
+        if (eventText && eventCharCount) {
+            eventCharCount.textContent = `${eventText.value.length}/200`;
+        }
+    }
+
+    // Yıl görünümü
+    renderYearView() {
+        const yearView = document.getElementById('yearView');
+        yearView.innerHTML = '';
+        
+        const months = [
+            'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+            'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+        ];
+        
+        months.forEach((monthName, monthIndex) => {
+            const monthBox = document.createElement('div');
+            monthBox.className = 'year-month-box';
+            monthBox.textContent = monthName;
+            
+            // Ayın etkinliklerini kontrol et ve plan rengini belirle
+            const monthEvents = this.getMonthEvents(monthIndex);
+            if (monthEvents.length > 0) {
+                // İlk etkinliğin plan rengini kullan
+                const firstEvent = monthEvents[0];
+                const planColor = this.getPlanColor(firstEvent.planId);
+                if (planColor) {
+                    monthBox.style.backgroundColor = planColor;
+                    monthBox.style.color = '#fff';
+                }
+            }
+            
+            monthBox.addEventListener('click', () => {
+                this.currentDate = new Date(this.currentDate.getFullYear(), monthIndex, 1);
+                this.showMonthView();
+            });
+            
+            yearView.appendChild(monthBox);
+        });
+    }
+
+    // Ayın etkinliklerini getir
+    getMonthEvents(monthIndex) {
+        const year = this.currentDate.getFullYear();
+        const monthEvents = [];
+        
+        for (let day = 1; day <= 31; day++) {
+            const date = new Date(year, monthIndex, day);
+            const dateStr = date.toISOString().split('T')[0];
+            const dayEvents = this.events[dateStr] || [];
+            monthEvents.push(...dayEvents);
+        }
+        
+        return monthEvents;
+    }
+
+    // Plan rengini getir
+    getPlanColor(planId) {
+        const plan = this.plans.find(p => p.id === planId);
+        return plan ? plan.color : null;
+    }
+
+    // Veri saklama
+    saveData() {
+        const data = {
+            events: this.events,
+            plans: this.plans,
+            currentPlanId: this.currentPlanId,
+            theme: this.theme
+        };
+        
+        // IndexedDB kullan
+        this.saveToIndexedDB(data);
+    }
+
+    // IndexedDB'ye kaydet
+    saveToIndexedDB(data) {
+        const request = indexedDB.open('CalendarDB', 1);
+        
+        request.onerror = () => {
+            console.error('IndexedDB hatası:', request.error);
+            // Fallback olarak localStorage kullan
+            localStorage.setItem('calendarData', JSON.stringify(data));
+        };
+        
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            const transaction = db.transaction(['calendarData'], 'readwrite');
+            const store = transaction.objectStore('calendarData');
+            
+            const saveRequest = store.put(data, 'main');
+            saveRequest.onsuccess = () => {
+                console.log('Veri IndexedDB\'ye kaydedildi');
+            };
+            saveRequest.onerror = () => {
+                console.error('Kaydetme hatası:', saveRequest.error);
+                // Fallback olarak localStorage kullan
+                localStorage.setItem('calendarData', JSON.stringify(data));
+            };
+        };
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('calendarData')) {
+                db.createObjectStore('calendarData');
+            }
+        };
+    }
+
+    // Veri yükleme
+    loadData() {
+        // Önce IndexedDB'den yüklemeyi dene
+        this.loadFromIndexedDB();
+    }
+
+    // IndexedDB'den yükle
+    loadFromIndexedDB() {
+        const request = indexedDB.open('CalendarDB', 1);
+        
+        request.onerror = () => {
+            console.error('IndexedDB hatası:', request.error);
+            // Fallback olarak localStorage kullan
+            this.loadFromLocalStorage();
+        };
+        
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            const transaction = db.transaction(['calendarData'], 'readonly');
+            const store = transaction.objectStore('calendarData');
+            
+            const getRequest = store.get('main');
+            getRequest.onsuccess = () => {
+                if (getRequest.result) {
+                    this.events = getRequest.result.events || {};
+                    this.plans = getRequest.result.plans || [];
+                    this.currentPlanId = getRequest.result.currentPlanId || null;
+                    this.theme = getRequest.result.theme || 'light';
+                    console.log('Veri IndexedDB\'den yüklendi');
+                } else {
+                    // IndexedDB'de veri yoksa localStorage'dan yükle
+                    this.loadFromLocalStorage();
+                }
+                this.initializeCalendar();
+            };
+            getRequest.onerror = () => {
+                console.error('Yükleme hatası:', getRequest.error);
+                // Fallback olarak localStorage kullan
+                this.loadFromLocalStorage();
+            };
+        };
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('calendarData')) {
+                db.createObjectStore('calendarData');
+            }
+        };
+    }
+
+    // LocalStorage'dan yükle (fallback)
+    loadFromLocalStorage() {
+        const savedData = localStorage.getItem('calendarData');
+        if (savedData) {
+            try {
+                const data = JSON.parse(savedData);
+                this.events = data.events || {};
+                this.plans = data.plans || [];
+                this.currentPlanId = data.currentPlanId || null;
+                this.theme = data.theme || 'light';
+                console.log('Veri localStorage\'dan yüklendi');
+            } catch (error) {
+                console.error('Veri yükleme hatası:', error);
+            }
+        }
+        this.initializeCalendar();
+    }
+
+    // Tüm verileri temizle
+    clearAllData() {
+        // IndexedDB'yi temizle
+        const request = indexedDB.open('CalendarDB', 1);
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            const transaction = db.transaction(['calendarData'], 'readwrite');
+            const store = transaction.objectStore('calendarData');
+            store.clear();
+        };
+        
+        // LocalStorage'ı temizle
+        localStorage.removeItem('calendarData');
+        
+        // Belleği temizle
+        this.events = {};
+        this.plans = [];
+        this.currentPlanId = null;
+        
+        // Takvimi yenile
+        this.renderCalendar();
+        this.renderPlans();
+        
+        alert('Tüm veriler başarıyla temizlendi.');
     }
 }
 

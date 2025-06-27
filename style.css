@@ -842,6 +842,24 @@ header h1 {
     }
 }
 
+@media (max-width: 600px) {
+    .plan-selector {
+        font-size: 1.2rem;
+        padding: 16px 20px;
+        min-width: 200px;
+    }
+    .new-plan-btn, .manage-plans-btn, .home-btn {
+        font-size: 1.2rem;
+        padding: 16px 24px;
+        border-radius: 30px;
+    }
+    .theme-toggle {
+        width: 56px;
+        height: 56px;
+        font-size: 1.8rem;
+    }
+}
+
 /* Plan Yönetimi Stilleri */
 .plan-controls {
     display: flex;
@@ -1166,4 +1184,66 @@ header h1 {
 .month-view-btn:hover, .week-view-btn:hover, .day-view-btn:hover {
     background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
     transform: scale(1.05);
+}
+
+#eventCharCount {
+    text-align: right;
+    font-size: 0.95rem;
+    color: #888;
+    margin-top: 2px;
+    margin-bottom: 10px;
+}
+
+.empty-day-message {
+    font-size: 0.75rem;
+    color: #ccc;
+    text-align: center;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.year-month-box {
+    width: calc(25% - 10px);
+    height: 80px;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 5px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.year-month-box:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.settings-section {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.settings-section h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.danger-button {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 5px;
+    transition: background 0.3s;
+}
+
+.danger-button:hover {
+    background: #c82333;
 } 

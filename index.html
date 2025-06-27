@@ -41,6 +41,12 @@
                 </div>
                 <button id="shareBtn" class="share-btn">🔗 Paylaş</button>
             </div>
+            <div class="settings-section">
+                <h3>Ayarlar</h3>
+                <button id="clearData" class="danger-button">Tüm Verileri Temizle</button>
+                <button id="exportData">Verileri Dışa Aktar</button>
+                <button id="importData">Verileri İçe Aktar</button>
+            </div>
         </header>
         
         <div class="search-section">
@@ -84,7 +90,8 @@
                 </select>
                 <input type="file" id="eventFile" class="event-file" />
                 <div id="eventFileInfo" class="event-file-info"></div>
-                <textarea id="eventText" placeholder="Etkinliğinizi buraya yazın..."></textarea>
+                <textarea id="eventText" placeholder="Etkinliğinizi buraya yazın..." maxlength="200"></textarea>
+                <div id="eventCharCount">0/200</div>
                 <div class="modal-buttons">
                     <button id="saveEvent">Kaydet</button>
                     <button id="deleteEvent">Sil</button>
