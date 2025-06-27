@@ -100,8 +100,8 @@ class Calendar {
     
     // Paylaşım modal'ını aç
     openShareModal() {
-        const shareLink = this.generateShareLink();
-        document.getElementById('shareLink').value = shareLink;
+        // Varsayılan olarak düzenleme linki gösterilsin
+        this.generateShareLinkWithMode('edit');
         document.getElementById('shareModal').style.display = 'block';
     }
     
