@@ -9,6 +9,7 @@ class Calendar {
         this.plans = this.loadPlans();
         this.currentPlanId = 'default';
         this.currentView = 'month'; // 'month', 'week', 'day'
+        this.editingPlanId = null; // Düzenlenen planın ID'sini tutar
         
         this.init();
     }
@@ -108,7 +109,7 @@ class Calendar {
         // Plan yönetimi olayları
         document.getElementById('newPlanBtn').addEventListener('click', () => this.openNewPlanModal());
         document.getElementById('closeNewPlanModal').addEventListener('click', () => this.closeNewPlanModal());
-        document.getElementById('createPlan').addEventListener('click', () => this.createNewPlan());
+        document.getElementById('createPlan').addEventListener('click', () => this.savePlan());
         document.getElementById('cancelPlan').addEventListener('click', () => this.closeNewPlanModal());
         document.getElementById('planSelector').addEventListener('change', (e) => this.switchPlan(e.target.value));
         
@@ -939,25 +940,28 @@ class Calendar {
 
     // Plan yönetimi olayları
     openNewPlanModal() {
-        // Renk seçeneklerini sıfırla
-        document.querySelectorAll('.color-option').forEach(option => {
-            option.classList.remove('selected');
-        });
-        // Varsayılan olarak mavi rengi seç
-        document.querySelector('.color-option[data-color="blue"]').classList.add('selected');
-        
         // Form alanlarını temizle
         document.getElementById('planName').value = '';
         document.getElementById('planDescription').value = '';
+        
+        // Renk seçeneklerini sıfırla ve varsayılanı seç
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        document.querySelector('.color-option[data-color="blue"]').classList.add('selected');
         
         document.getElementById('newPlanModal').style.display = 'block';
     }
     
     closeNewPlanModal() {
         document.getElementById('newPlanModal').style.display = 'none';
+        this.editingPlanId = null; // Düzenleme modunu sıfırla
+        // Modal başlığını ve buton metnini varsayılana döndür
+        document.querySelector('#newPlanModal h3').textContent = '🆕 Yeni Plan Oluştur';
+        document.getElementById('createPlan').textContent = '✅ Plan Oluştur';
     }
     
-    createNewPlan() {
+    savePlan() {
         const planName = document.getElementById('planName').value.trim();
         const planDescription = document.getElementById('planDescription').value.trim();
         const selectedColor = document.querySelector('.color-option.selected')?.dataset.color || 'blue';
@@ -966,29 +970,33 @@ class Calendar {
             this.showNotification('Plan adı gereklidir!', 'error');
             return;
         }
+
+        if (this.editingPlanId) {
+            // Mevcut planı güncelle
+            const plan = this.plans[this.editingPlanId];
+            plan.name = planName;
+            plan.description = planDescription;
+            plan.color = selectedColor;
+            this.showNotification(`"${planName}" planı güncellendi!`);
+        } else {
+            // Yeni plan oluştur
+            const newPlan = {
+                id: this.generatePlanId(),
+                name: planName,
+                description: planDescription,
+                color: selectedColor,
+                createdAt: new Date().toISOString(),
+                events: {}
+            };
+            this.plans[newPlan.id] = newPlan;
+            this.showNotification(`"${planName}" planı oluşturuldu!`);
+        }
         
-        // Yeni plan oluştur
-        const newPlan = {
-            id: this.generatePlanId(),
-            name: planName,
-            description: planDescription,
-            color: selectedColor,
-            createdAt: new Date().toISOString(),
-            events: {}
-        };
-        
-        // Planı kaydet
-        this.plans[newPlan.id] = newPlan;
         this.savePlans();
-        
-        // Plan seçiciyi güncelle
         this.updatePlanSelector();
-        
-        // Yeni planı seç
-        this.switchPlan(newPlan.id);
-        
-        this.closeNewPlanModal();
-        this.showNotification(`"${planName}" planı oluşturuldu!`);
+        this.applyPlanTheme(); // Eğer mevcut plan düzenlendiyse temayı uygula
+        this.renderPlansList(); // Yönetim modalındaki listeyi yenile
+        this.closeNewPlanModal(); // Modalı kapat ve düzenleme modunu sıfırla
     }
     
     switchPlan(planId) {
@@ -1317,6 +1325,71 @@ class Calendar {
         this.saveEvents();
         this.renderCalendar();
         this.showNotification(`Plan başarıyla ${shiftDays} gün kaydırıldı.`, "success");
+    }
+
+    editPlan(planId) {
+        this.editingPlanId = planId;
+        const plan = this.plans[planId];
+        if (!plan) return;
+
+        // Modal'ı plan verileriyle doldur
+        document.getElementById('planName').value = plan.name;
+        document.getElementById('planDescription').value = plan.description;
+
+        // Rengi ayarla
+        document.querySelectorAll('.color-option').forEach(opt => {
+            opt.classList.toggle('selected', opt.dataset.color === plan.color);
+        });
+        
+        // Modal başlığını ve buton metnini düzenleme moduna göre değiştir
+        document.querySelector('#newPlanModal h3').textContent = '📝 Planı Düzenle';
+        document.getElementById('createPlan').textContent = '💾 Değişiklikleri Kaydet';
+
+        document.getElementById('newPlanModal').style.display = 'block';
+    }
+
+    deletePlan(planId) {
+        if (planId === 'default') {
+            this.showNotification('Ana plan silinemez!', 'error');
+            return;
+        }
+        if (!confirm(`'${this.plans[planId].name}' planını ve içindeki tüm etkinlikleri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
+            return;
+        }
+        
+        const wasCurrentPlan = this.currentPlanId === planId;
+        
+        delete this.plans[planId];
+        
+        if (wasCurrentPlan) {
+            this.switchPlan('default');
+        }
+        
+        this.savePlans();
+        this.renderPlansList();
+        this.updatePlanSelector();
+        
+        this.showNotification('Plan başarıyla silindi.');
+    }
+
+    duplicatePlan(planId) {
+        const planToDuplicate = this.plans[planId];
+        if (!planToDuplicate) {
+            this.showNotification('Kopyalanacak plan bulunamadı!', 'error');
+            return;
+        }
+        
+        const newPlan = JSON.parse(JSON.stringify(planToDuplicate)); // Derin kopyalama
+        newPlan.id = this.generatePlanId();
+        newPlan.name = `${planToDuplicate.name} (Kopya)`;
+        newPlan.createdAt = new Date().toISOString();
+        
+        this.plans[newPlan.id] = newPlan;
+        this.savePlans();
+        this.renderPlansList();
+        this.updatePlanSelector();
+        
+        this.showNotification(`'${planToDuplicate.name}' planı kopyalandı.`);
     }
 }
 
