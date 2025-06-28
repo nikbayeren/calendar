@@ -791,6 +791,11 @@ class Calendar {
     deleteEvent() {
         if (!this.selectedDate) return;
         
+        const confirmDelete = confirm("Bu etkinliği silmek istediğinizden emin misiniz?");
+        if (!confirmDelete) {
+            return;
+        }
+
         const dateKey = this.formatDate(this.selectedDate);
         delete this.events[dateKey];
         
