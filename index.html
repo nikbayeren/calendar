@@ -38,6 +38,7 @@
                         <button id="monthViewBtn" class="view-btn active" title="Ay Görünümü">Ay</button>
                         <button id="weekViewBtn" class="view-btn" title="Hafta Görünümü">Hafta</button>
                         <button id="dayViewBtn" class="view-btn" title="Gün Görünümü">Gün</button>
+                        <button id="yearViewBtn" class="view-btn" title="Yıllık Görünüm">Yıl</button>
                     </div>
                     <div class="dropdown">
                         <button id="actionsMenuBtn" class="dropdown-btn">☰ İşlemler</button>
@@ -45,7 +46,6 @@
                             <button id="newPlanBtn">➕ Yeni Plan</button>
                             <button id="managePlansBtn">🔧 Planları Yönet</button>
                             <button id="shiftPlanBtn">⏭️ Planı Kaydır</button>
-                            <button id="yearViewBtn">📅 Yıllık Görünüm</button>
                             <button id="shareBtn">🔗 Paylaş</button>
                             <button id="exportBtn">📥 İndir</button>
                              <div class="divider"></div>
@@ -113,20 +113,8 @@
             <div class="modal-content">
                 <span class="close" id="closeShareModal">&times;</span>
                 <h3>Takviminizi Paylaşın</h3>
-                <p>Bu link ile takviminizi başkalarıyla paylaşabilir ve düzenleyebilirsiniz:</p>
-                <div class="share-link-container">
-                    <input type="text" id="shareLink" readonly />
-                    <button id="copyLink">📋 Kopyala</button>
-                </div>
-                <div class="share-info">
-                    <p><strong>Nasıl çalışır:</strong></p>
-                    <ul>
-                        <li>Linki kopyalayıp başkalarına gönderin</li>
-                        <li>Linke tıklayan kişi takviminizi görebilir ve düzenleyebilir</li>
-                        <li>Değişiklikler otomatik olarak kaydedilir</li>
-                    </ul>
-                </div>
-                <div class="modal-buttons">
+                <p>Takviminizi başkalarıyla paylaşmak için bir link türü seçin. Link otomatik olarak panonuza kopyalanacaktır.</p>
+                <div class="modal-buttons" style="margin-top: 1.5rem; justify-content: center;">
                     <button id="generateViewLink">🔗 Sadece Görüntüleme Linki</button>
                     <button id="generateEditLink">✏️ Düzenleme Linki</button>
                 </div>

@@ -54,9 +54,8 @@ class Calendar {
         // Paylaşım olayları
         document.getElementById('shareBtn').addEventListener('click', () => this.openShareModal());
         document.getElementById('closeShareModal').addEventListener('click', () => this.closeShareModal());
-        document.getElementById('copyLink').addEventListener('click', () => this.copyShareLink());
-        document.getElementById('generateViewLink').addEventListener('click', () => this.generateShareLinkWithMode('view'));
-        document.getElementById('generateEditLink').addEventListener('click', () => this.generateShareLinkWithMode('edit'));
+        document.getElementById('generateViewLink').addEventListener('click', () => this.generateAndCopyShareLink('view'));
+        document.getElementById('generateEditLink').addEventListener('click', () => this.generateAndCopyShareLink('edit'));
         
         // Modal dışına tıklayınca kapat
         window.addEventListener('click', (e) => {
@@ -130,6 +129,7 @@ class Calendar {
         document.getElementById('monthViewBtn').addEventListener('click', () => this.switchView('month'));
         document.getElementById('weekViewBtn').addEventListener('click', () => this.switchView('week'));
         document.getElementById('dayViewBtn').addEventListener('click', () => this.switchView('day'));
+        document.getElementById('yearViewBtn').addEventListener('click', () => this.openYearModal());
 
         // Yeni "İşlemler" menüsü
         const actionsBtn = document.getElementById('actionsMenuBtn');
@@ -181,8 +181,6 @@ class Calendar {
     
     // Paylaşım modal'ını aç
     openShareModal() {
-        // Varsayılan olarak düzenleme linki gösterilsin
-        this.generateShareLinkWithMode('edit');
         document.getElementById('shareModal').style.display = 'block';
     }
     
@@ -191,42 +189,33 @@ class Calendar {
         document.getElementById('shareModal').style.display = 'none';
     }
     
-    // Paylaşım linki oluştur (yetki ile)
-    generateShareLinkWithMode(mode) {
+    generateAndCopyShareLink(mode) {
         const eventsData = JSON.stringify(this.events);
         const encodedData = encodeURIComponent(eventsData);
         const baseUrl = window.location.origin + window.location.pathname;
         let link = `${baseUrl}?share=${encodedData}`;
-        if (mode === 'view') link += '&mode=view';
-        else link += '&mode=edit';
-        document.getElementById('shareLink').value = link;
-        this.showNotification(mode === 'view' ? 'Sadece görüntüleme linki oluşturuldu!' : 'Düzenleme linki oluşturuldu!');
-    }
-    
-    // Linki kopyala
-    copyShareLink() {
-        const shareLink = document.getElementById('shareLink');
-        shareLink.select();
-        shareLink.setSelectionRange(0, 99999); // Mobil için
-        
-        try {
-            document.execCommand('copy');
-            this.showNotification('Link panoya kopyalandı!');
-        } catch (err) {
-            // Modern tarayıcılar için
-            navigator.clipboard.writeText(shareLink.value).then(() => {
-                this.showNotification('Link panoya kopyalandı!');
-            }).catch(() => {
-                this.showNotification('Link kopyalanamadı!', 'error');
-            });
+
+        if (mode === 'view') {
+            link += '&mode=view';
+        } else { // 'edit'
+            link += '&mode=edit';
         }
+
+        navigator.clipboard.writeText(link).then(() => {
+            const message = mode === 'view'
+                ? 'Sadece görüntüleme linki panoya kopyalandı!'
+                : 'Düzenleme linki panoya kopyalandı!';
+            this.showNotification(message, 'success');
+            this.closeShareModal();
+        }).catch(err => {
+            console.error('Kopyalama hatası:', err);
+            this.showNotification('Link kopyalanamadı!', 'error');
+        });
     }
     
     // İndirme menüsünü aç/kapat
     toggleExportOptions() {
         // Bu fonksiyon yeni tasarımda kullanılmıyor ama hata vermemesi için kalabilir.
-        // const options = document.getElementById('exportOptions');
-        // if(options) options.classList.toggle('show');
     }
     
     // Etkinlik metnini güvenli şekilde string olarak döndür
