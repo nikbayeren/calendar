@@ -80,10 +80,6 @@ class Calendar {
                 this.closePlanManagementModal();
                 document.getElementById('exportOptions').classList.remove('show');
             }
-            // E ile etkinlik ekle (modal kapalıysa)
-            if (e.key.toLowerCase() === 'e' && !document.getElementById('eventModal').style.display.includes('block')) {
-                this.openEventModal(new Date(this.currentDate));
-            }
             // Ctrl+F ile arama inputuna odaklan
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
                 e.preventDefault();
@@ -119,6 +115,7 @@ class Calendar {
         // Plan yönetimi modal olayları
         document.getElementById('managePlansBtn').addEventListener('click', () => this.openPlanManagementModal());
         document.getElementById('closePlanManagementModal').addEventListener('click', () => this.closePlanManagementModal());
+        document.getElementById('shiftPlanBtn').addEventListener('click', () => this.shiftPlan());
 
         document.getElementById('exportPlanBtn').addEventListener('click', () => this.exportCurrentPlan());
         document.getElementById('importPlanInput').addEventListener('change', (e) => this.importPlanFromFile(e));
@@ -225,23 +222,18 @@ class Calendar {
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.setFont('courier', 'normal'); // Türkçe karakter desteği için courier
+            doc.setFont('courier', 'normal');
             doc.setFontSize(20);
             doc.text('Takvim Etkinlikleri', 20, 20);
             doc.setFontSize(12);
             doc.text(`Oluşturulma Tarihi: ${new Date().toLocaleDateString('tr-TR')}`, 20, 30);
-            const startInput = document.getElementById('pdfStartDate');
-            const endInput = document.getElementById('pdfEndDate');
-            let startDate = startInput && startInput.value ? new Date(startInput.value) : null;
-            let endDate = endInput && endInput.value ? new Date(endInput.value) : null;
-            if (endDate) endDate.setHours(23,59,59,999);
-            const events = this.getEventsForExport(startDate, endDate);
+            const events = this.getEventsForExport();
             if (events.length === 0) {
                 doc.text('Henüz etkinlik eklenmemiş.', 20, 50);
             } else {
                 const tableData = events.map(event => [
                     event.date,
-                    getEventText(event)
+                    this.getEventText(event)
                 ]);
                 doc.autoTable({
                     startY: 40,
@@ -269,18 +261,13 @@ class Calendar {
     // Excel İndirme
     exportToExcel() {
         try {
-            const startInput = document.getElementById('pdfStartDate');
-            const endInput = document.getElementById('pdfEndDate');
-            let startDate = startInput && startInput.value ? new Date(startInput.value) : null;
-            let endDate = endInput && endInput.value ? new Date(endInput.value) : null;
-            if (endDate) endDate.setHours(23,59,59,999);
-            const events = this.getEventsForExport(startDate, endDate);
+            const events = this.getEventsForExport();
             const wb = XLSX.utils.book_new();
             const data = [
                 ['Tarih', 'Etkinlik', 'Oluşturulma Tarihi'],
                 ...events.map(event => [
                     event.date,
-                    getEventText(event),
+                    this.getEventText(event),
                     new Date().toLocaleDateString('tr-TR')
                 ])
             ];
@@ -303,12 +290,7 @@ class Calendar {
     // Metin İndirme
     exportToText() {
         try {
-            const startInput = document.getElementById('pdfStartDate');
-            const endInput = document.getElementById('pdfEndDate');
-            let startDate = startInput && startInput.value ? new Date(startInput.value) : null;
-            let endDate = endInput && endInput.value ? new Date(endInput.value) : null;
-            if (endDate) endDate.setHours(23,59,59,999);
-            const events = this.getEventsForExport(startDate, endDate);
+            const events = this.getEventsForExport();
             let content = 'TAKVİM ETKİNLİKLERİ\n';
             content += '='.repeat(50) + '\n\n';
             content += `Oluşturulma Tarihi: ${new Date().toLocaleDateString('tr-TR')}\n\n`;
@@ -316,7 +298,7 @@ class Calendar {
                 content += 'Henüz etkinlik eklenmemiş.\n';
             } else {
                 events.forEach((event, index) => {
-                    let text = getEventText(event);
+                    let text = this.getEventText(event);
                     content += `${index + 1}. ${event.date}\n`;
                     content += `   ${text}\n\n`;
                 });
@@ -1283,6 +1265,58 @@ class Calendar {
 
     generatePlanId() {
         return 'plan_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    shiftPlan() {
+        const daysToShift = prompt("Planı kaç gün kaydırmak istiyorsunuz? (Geri kaydırmak için negatif bir sayı girin, örn: -3)");
+
+        if (daysToShift === null || daysToShift.trim() === "") {
+            return; // Kullanıcı iptal etti veya boş girdi
+        }
+
+        const shiftDays = parseInt(daysToShift, 10);
+
+        if (isNaN(shiftDays)) {
+            this.showNotification("Lütfen geçerli bir sayı girin.", "error");
+            return;
+        }
+
+        if (shiftDays === 0) {
+            this.showNotification("Kaydırma miktarı 0 olamaz.", "error");
+            return;
+        }
+        
+        const confirmShift = confirm(`Mevcut plandaki tüm etkinlikler ${shiftDays} gün kaydırılacak. Onaylıyor musunuz?`);
+        if (!confirmShift) {
+            return;
+        }
+
+        const currentEvents = this.events;
+        const newEvents = {};
+
+        // Etkinlikleri tarihe göre sırala (önce/sonra kaydırmaya göre)
+        const sortedKeys = Object.keys(currentEvents).sort((a, b) => {
+            const dateA = new Date(a);
+            const dateB = new Date(b);
+            return shiftDays > 0 ? dateB - dateA : dateA - dateB;
+        });
+
+        for (const dateKey of sortedKeys) {
+            const eventData = currentEvents[dateKey];
+            const parts = dateKey.split('-').map(Number);
+            const originalDate = new Date(parts[0], parts[1] - 1, parts[2]);
+
+            const newDate = new Date(originalDate);
+            newDate.setDate(originalDate.getDate() + shiftDays);
+
+            const newDateKey = this.formatDate(newDate);
+            newEvents[newDateKey] = eventData;
+        }
+
+        this.events = newEvents;
+        this.saveEvents();
+        this.renderCalendar();
+        this.showNotification(`Plan başarıyla ${shiftDays} gün kaydırıldı.`, "success");
     }
 }
 

@@ -154,15 +154,26 @@ header h1 {
 .header-buttons {
     display: flex;
     justify-content: center;
-    gap: 20px;
-    align-items: center;
+    gap: 0 !important;
+    align-items: flex-start !important;
+    vertical-align: top !important;
     margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    line-height: 1 !important;
 }
 
 /* İndirme kontrolleri */
 .export-controls {
     position: relative;
     display: inline-block;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
 }
 
 .export-btn {
@@ -175,6 +186,8 @@ header h1 {
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 500;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .export-btn:hover {
@@ -236,6 +249,8 @@ header h1 {
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 500;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .share-btn:hover {
@@ -911,6 +926,24 @@ header h1 {
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
+.shift-plan-btn {
+    background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.shift-plan-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 126, 95, 0.4);
+}
+
 /* Plan Form Stilleri */
 .plan-form {
     margin-bottom: 20px;
@@ -1255,17 +1288,36 @@ header h1 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    gap: 16px;
+    gap: 0 !important;
     justify-content: center;
     align-items: center;
-    margin-bottom: 8px !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    line-height: 1 !important;
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
 }
 .controls-row {
     display: flex;
-    gap: 18px;
+    gap: 0 !important;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    line-height: 1 !important;
+    width: 100%;
+}
+.controls-row:not(:first-child) {
+    margin-top: 8px !important;
+}
+.export-controls, .share-btn {
+    flex: 1 1 0;
+    display: flex;
     justify-content: center;
 }
 .small-plan-controls {

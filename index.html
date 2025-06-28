@@ -17,6 +17,7 @@
                     </select>
                     <button id="newPlanBtn" class="new-plan-btn small-btn">➕ Yeni Plan</button>
                     <button id="managePlansBtn" class="manage-plans-btn small-btn">🔧 Planları Yönet</button>
+                    <button id="shiftPlanBtn" class="shift-plan-btn small-btn">⏭️ Planı Kaydır</button>
                 </div>
                 <button id="themeToggle" class="theme-toggle">🌙</button>
             </div>
@@ -28,26 +29,28 @@
             </div>
             <div class="controls-grid">
                 <div class="controls-row">
-                    <button id="monthViewBtn" class="month-view-btn">📆 Ay</button>
-                    <button id="weekViewBtn" class="week-view-btn">🗓️ Hafta</button>
+                    <button id="monthViewBtn" class="month-view-btn" style="grid-column: 1;">📆 Ay</button>
+                    <button id="weekViewBtn" class="week-view-btn" style="grid-column: 2;">🗓️ Hafta</button>
+                    <button id="dayViewBtn" class="day-view-btn" style="grid-column: 3;">📖 Gün</button>
+                    <button id="yearViewBtn" class="year-view-btn" style="grid-column: 4;">📅 12 Ay Görünüm</button>
                 </div>
-                <div class="controls-row">
-                    <button id="dayViewBtn" class="day-view-btn">📖 Gün</button>
-                    <button id="yearViewBtn" class="year-view-btn">📅 12 Ay Görünüm</button>
-                </div>
-            </div>
-            <div class="header-buttons" style="justify-content:center; margin-top: 10px;">
-                <div class="export-controls">
-                    <input type="date" id="pdfStartDate" style="margin-right:6px;">
-                    <input type="date" id="pdfEndDate" style="margin-right:10px;">
-                    <button id="exportBtn" class="export-btn">📥 İndir</button>
-                    <div id="exportOptions" class="export-options">
-                        <button id="exportPDF">PDF İndir</button>
-                        <button id="exportExcel">Excel İndir</button>
-                        <button id="exportText">Metin İndir</button>
+                <div class="controls-row" style="display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; margin-top: 8px;">
+                    <div></div>
+                    <div style="display: flex; justify-content: center;">
+                        <div class="export-controls">
+                            <button id="exportBtn" class="export-btn">📥 İndir</button>
+                            <div id="exportOptions" class="export-options">
+                                <button id="exportPDF">PDF İndir</button>
+                                <button id="exportExcel">Excel İndir</button>
+                                <button id="exportText">Metin İndir</button>
+                            </div>
+                        </div>
                     </div>
+                    <div style="display: flex; justify-content: center;">
+                        <button id="shareBtn" class="share-btn">🔗 Paylaş</button>
+                    </div>
+                    <div></div>
                 </div>
-                <button id="shareBtn" class="share-btn">🔗 Paylaş</button>
             </div>
             <div class="settings-section" style="margin-top: 10px;">
                 <h3>Ayarlar</h3>
