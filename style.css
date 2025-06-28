@@ -432,7 +432,15 @@ header {
     padding: 2rem;
 }
 
-#newPlanModal, #shareModal, #yearModal, #planManagementModal {
+#shareModal, #yearModal, #planManagementModal {
+    z-index: 1001;
+}
+
+#newPlanModal {
+    z-index: 1002;
+}
+
+#planManagementModal, #exportModal {
     z-index: 1001;
 }
 

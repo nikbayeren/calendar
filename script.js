@@ -1235,7 +1235,10 @@ class Calendar {
                 if (date > endDate) continue;
             }
 
-            if (eventObj.repeat === 'weekly') {
+            if (eventObj.repeat === 'daily') {
+                // Sadece başlangıç gününden sonraki günler için
+                if (date.getTime() > startDate.getTime()) return eventObj;
+            } else if (eventObj.repeat === 'weekly') {
                 // Aynı haftanın aynı günü mü? (ve aynı gün değil)
                 if (date.getDay() === startDate.getDay() && date.getTime() !== startDate.getTime()) return eventObj;
             } else if (eventObj.repeat === 'monthly') {
@@ -1261,7 +1264,7 @@ class Calendar {
     }
 
     getRepeatLabel(val) {
-        const map = { none: 'Tek Seferlik', weekly: 'Her Hafta', monthly: 'Her Ay', yearly: 'Her Yıl' };
+        const map = { none: 'Tek Seferlik', daily: 'Her Gün', weekly: 'Her Hafta', monthly: 'Her Ay', yearly: 'Her Yıl' };
         return map[val] || 'Tek Seferlik';
     }
 
