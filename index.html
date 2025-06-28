@@ -98,6 +98,16 @@
                     <option value="monthly">Her Ay</option>
                     <option value="yearly">Her Yıl</option>
                 </select>
+                <div class="time-inputs" style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <div style="flex: 1;">
+                        <label for="eventStartTime" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-secondary);">Başlangıç Saati:</label>
+                        <input type="time" id="eventStartTime" class="event-time" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-secondary); border-radius: var(--radius-md);">
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="eventEndTime" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-secondary);">Bitiş Saati:</label>
+                        <input type="time" id="eventEndTime" class="event-time" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-secondary); border-radius: var(--radius-md);">
+                    </div>
+                </div>
                 <div id="repeat-end-date-container" style="display: none; margin-top: 1rem;">
                     <label for="eventRepeatEndDate" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-secondary);">Tekrar Bitiş Tarihi:</label>
                     <input type="date" id="eventRepeatEndDate" class="event-repeat" />

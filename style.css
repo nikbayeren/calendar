@@ -344,14 +344,12 @@ header {
 }
 
 .day.has-event::after {
-    content: '';
+    content: var(--day-event-icon);
     position: absolute;
     bottom: 6px;
     right: 6px;
-    width: 8px;
-    height: 8px;
-    background: var(--event-dot);
-    border-radius: 50%;
+    font-size: 1rem;
+    line-height: 1;
 }
 
 .day-number {
@@ -363,10 +361,23 @@ header {
 .event-preview {
     font-size: 0.75rem;
     color: var(--text-secondary);
+    user-select: none;
+    display: flex;
+    align-items: baseline;
+    gap: 0.3em;
+    overflow: hidden;
+}
+
+.event-time-preview {
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.event-text-preview {
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-    user-select: none;
+    min-width: 0;
 }
 
 /* --- Search Section --- */
@@ -643,7 +654,7 @@ header {
 }
 
 .year-month-day.has-event {
-    background-color: color-mix(in srgb, var(--event-dot) 30%, transparent);
+    background-color: color-mix(in srgb, var(--day-event-color, var(--event-dot)) 30%, transparent);
     font-weight: 600;
 }
 
@@ -734,4 +745,86 @@ header {
         flex-direction: column;
         align-items: stretch;
     }
+}
+
+/* --- Gün Görünümü Zaman Çizelgesi --- */
+.day-view-container {
+    display: flex;
+    flex-direction: column;
+    height: 70vh; /* veya uygun bir yükseklik */
+    position: relative;
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.day-view-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-primary);
+    background-color: var(--bg-secondary);
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.day-view-all-day {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border-primary);
+    background-color: var(--bg-tertiary);
+}
+.all-day-event {
+    background-color: var(--accent-primary);
+    color: var(--accent-primary-text);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+    cursor: pointer;
+}
+
+.day-view-timeline {
+    flex-grow: 1;
+    overflow-y: auto;
+    position: relative;
+}
+
+.time-slot {
+    display: flex;
+    height: 60px; /* 1 saat = 60px */
+    border-bottom: 1px dotted var(--border-secondary);
+}
+.time-slot:last-child {
+    border-bottom: none;
+}
+.time-label {
+    width: 60px;
+    text-align: center;
+    padding-top: -10px; /* etiketi çizginin üzerine getirmek için */
+    margin-top: -10px;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    border-right: 1px solid var(--border-primary);
+}
+.time-content {
+    flex-grow: 1;
+    position: relative;
+}
+
+.day-event-block {
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    background-color: var(--accent-primary);
+    color: var(--accent-primary-text);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    overflow: hidden;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-left: 4px solid var(--accent-primary-hover);
+}
+
+.day-event-block:hover {
+    filter: brightness(1.1);
 } 

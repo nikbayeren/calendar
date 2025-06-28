@@ -175,7 +175,19 @@ class Calendar {
         
         if (sharedData) {
             try {
-                const decodedData = decodeURIComponent(sharedData);
+                let decodedData;
+                // Önce yeni Base64 formatını dene
+                try {
+                    // Unicode karakterleri doğru işlemek için
+                    decodedData = decodeURIComponent(atob(sharedData).split('').map(function(c) {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+                } catch (e) {
+                    // Base64 başarısız olursa, eski formatı varsay (geriye uyumluluk)
+                    console.log("Eski paylaşım linki formatına geri dönülüyor.");
+                    decodedData = decodeURIComponent(sharedData);
+                }
+                
                 const parsedEvents = JSON.parse(decodedData);
                 
                 // Paylaşılan verileri yükle
@@ -206,7 +218,12 @@ class Calendar {
     
     generateAndCopyShareLink(mode) {
         const eventsData = JSON.stringify(this.events);
-        const encodedData = encodeURIComponent(eventsData);
+        // Unicode karakterleri doğru işlemek için önce URI-encode, sonra btoa
+        const encodedData = btoa(encodeURIComponent(eventsData).replace(/%([0-9A-F]{2})/g,
+            function toSolidBytes(match, p1) {
+                return String.fromCharCode('0x' + p1);
+        }));
+
         const baseUrl = window.location.origin + window.location.pathname;
         let link = `${baseUrl}?share=${encodedData}`;
 
@@ -514,11 +531,19 @@ class Calendar {
             }
             if (eventObj && eventObj.text) {
                 dayElement.classList.add('has-event');
-                dayElement.setAttribute('data-category', eventObj.category || 'is');
+                const categoryIcon = this.getCategoryIcon(eventObj.category);
+                dayElement.style.setProperty('--day-event-icon', `'${categoryIcon}'`);
                 
                 const eventPreview = document.createElement('div');
                 eventPreview.className = 'event-preview';
-                eventPreview.textContent = eventObj.text.substring(0, 20) + (eventObj.text.length > 20 ? '...' : '');
+                
+                let previewText = '';
+                if (eventObj.startTime) {
+                    previewText += `<span class="event-time-preview">⏰ ${eventObj.startTime}</span>`;
+                }
+                previewText += `<span class="event-text-preview">${eventObj.text}</span>`;
+                eventPreview.innerHTML = previewText;
+
                 dayElement.appendChild(eventPreview);
                 
                 // Sürükle-bırak için etkinlik önizlemesini sürüklenebilir yap
@@ -576,10 +601,19 @@ class Calendar {
             if (!eventObj) eventObj = this.getRepeatingEventForDate(currentDate);
             if (eventObj && eventObj.text) {
                 dayElement.classList.add('has-event');
-                dayElement.setAttribute('data-category', eventObj.category || 'is');
+                const categoryIcon = this.getCategoryIcon(eventObj.category);
+                dayElement.style.setProperty('--day-event-icon', `'${categoryIcon}'`);
+                
                 const eventPreview = document.createElement('div');
                 eventPreview.className = 'event-preview';
-                eventPreview.textContent = eventObj.text.substring(0, 20) + (eventObj.text.length > 20 ? '...' : '');
+                
+                let previewText = '';
+                if (eventObj.startTime) {
+                    previewText += `<span class="event-time-preview">⏰ ${eventObj.startTime}</span>`;
+                }
+                previewText += `<span class="event-text-preview">${eventObj.text}</span>`;
+                eventPreview.innerHTML = previewText;
+                
                 dayElement.appendChild(eventPreview);
                 eventPreview.draggable = true;
                 eventPreview.addEventListener('dragstart', (e) => this.dragStart(e, currentDate, eventObj.text));
@@ -612,7 +646,15 @@ class Calendar {
             const eventText = (eventObj.text && eventObj.text !== 'undefined') ? eventObj.text : '';
             const eventDetail = document.createElement('div');
             eventDetail.className = 'event-detail';
-            eventDetail.innerHTML = `<strong>Etkinlik:</strong> ${eventText}<br><strong>Kategori:</strong> ${this.getCategoryLabel(eventObj.category)}<br><strong>Tekrar:</strong> ${this.getRepeatLabel(eventObj.repeat)}`;
+            let timeInfo = '';
+            if (eventObj.startTime) {
+                timeInfo = `<strong>⏰ Saat:</strong> ${eventObj.startTime}`;
+                if (eventObj.endTime) {
+                    timeInfo += ` - ${eventObj.endTime}`;
+                }
+                timeInfo += '<br>';
+            }
+            eventDetail.innerHTML = `${timeInfo}<strong>Etkinlik:</strong> ${eventText}<br><strong>Kategori:</strong> ${this.getCategoryLabel(eventObj.category)}<br><strong>Tekrar:</strong> ${this.getRepeatLabel(eventObj.repeat)}`;
             if (eventObj.filename && eventObj.file) {
                 eventDetail.innerHTML += `<br><strong>Dosya:</strong> <a href="${eventObj.file}" download="${eventObj.filename}">${eventObj.filename}</a>`;
             }
@@ -718,11 +760,14 @@ class Calendar {
     openEventModal(date) {
         this.selectedDate = date;
         const dateKey = this.formatDate(date);
-        const eventObj = this.events[dateKey] || { text: '', category: '', repeat: 'none', file: null, filename: null, repeatEndDate: null };
+        const eventObj = this.events[dateKey] || this.getRepeatingEventForDate(date) || { text: '', category: 'is', repeat: 'none', file: null, filename: null, repeatEndDate: null, startTime: '', endTime: '' };
+        
         document.getElementById('modalDate').textContent = `${date.getDate()} ${this.getMonthName(date.getMonth())} ${date.getFullYear()}`;
         document.getElementById('eventText').value = eventObj.text || '';
-        document.getElementById('eventCategory').value = eventObj.category || '';
+        document.getElementById('eventCategory').value = eventObj.category || 'is';
         document.getElementById('eventRepeat').value = eventObj.repeat || 'none';
+        document.getElementById('eventStartTime').value = eventObj.startTime || '';
+        document.getElementById('eventEndTime').value = eventObj.endTime || '';
         
         // Tekrar bitiş tarihi
         const repeatEndDateContainer = document.getElementById('repeat-end-date-container');
@@ -767,9 +812,13 @@ class Calendar {
             eventText.maxLength = 500;
             eventText.addEventListener('input', this.updateCharCount);
         }
-        // Bitiş tarihi alanını ve değerini sıfırla
-        document.getElementById('repeat-end-date-container').style.display = 'none';
-        document.getElementById('eventRepeatEndDate').value = '';
+        // Tekrar seçiminde bitiş tarihi alanını göster/gizle
+        const eventRepeatSelect = document.getElementById('eventRepeat');
+        if (eventRepeatSelect.value !== 'none') {
+            repeatEndDateContainer.style.display = 'block';
+        } else {
+            repeatEndDateContainer.style.display = 'none';
+        }
     }
     
     updateCharCount() {
@@ -807,6 +856,8 @@ class Calendar {
         document.getElementById('eventCategory').value = '';
         document.getElementById('eventRepeat').value = 'none';
         document.getElementById('eventFile').value = '';
+        document.getElementById('eventStartTime').value = '';
+        document.getElementById('eventEndTime').value = '';
         const fileInfo = document.getElementById('eventFileInfo');
         fileInfo.innerHTML = '';
         fileInfo.dataset.file = '';
@@ -823,6 +874,8 @@ class Calendar {
         const eventCategory = document.getElementById('eventCategory').value;
         const eventRepeat = document.getElementById('eventRepeat').value;
         const eventRepeatEndDate = document.getElementById('eventRepeatEndDate').value;
+        const startTime = document.getElementById('eventStartTime').value;
+        const endTime = document.getElementById('eventEndTime').value;
         const dateKey = this.formatDate(this.selectedDate);
         let fileData = document.getElementById('eventFileInfo').dataset.file || null;
         let fileName = document.getElementById('eventFileInfo').dataset.filename || null;
@@ -833,7 +886,9 @@ class Calendar {
                 repeat: eventRepeat, 
                 file: fileData, 
                 filename: fileName,
-                repeatEndDate: eventRepeat === 'none' ? null : eventRepeatEndDate
+                repeatEndDate: eventRepeat === 'none' ? null : eventRepeatEndDate,
+                startTime: startTime,
+                endTime: endTime
             };
         } else {
             delete this.events[dateKey];
@@ -1194,6 +1249,13 @@ class Calendar {
         if ('Notification' in window && Notification.permission === 'granted') {
             new Notification(title, { body });
         }
+    }
+
+    getCategoryIcon(cat) {
+        const map = {
+            is: '💼', kisisel: '👤', tatil: '🏖️', dogumgunu: '🎂', toplanti: '📅', diger: '🔖'
+        };
+        return map[cat] || '🔖';
     }
 
     getCategoryLabel(cat) {
