@@ -57,6 +57,11 @@ class Calendar {
         document.getElementById('generateViewLink').addEventListener('click', () => this.generateAndCopyShareLink('view'));
         document.getElementById('generateEditLink').addEventListener('click', () => this.generateAndCopyShareLink('edit'));
         
+        // Veri yönetimi
+        document.getElementById('clearData').addEventListener('click', () => this.clearAllData());
+        document.getElementById('exportData').addEventListener('click', () => this.exportAllData());
+        document.getElementById('importData').addEventListener('click', () => this.importAllData());
+        
         // Modal dışına tıklayınca kapat
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
@@ -1418,6 +1423,85 @@ class Calendar {
     closeExportModal() {
         const modal = document.getElementById('exportModal');
         if (modal) modal.style.display = 'none';
+    }
+
+    clearAllData() {
+        if (!confirm("TÜM VERİLERİNİZ (tüm planlar ve etkinlikler) kalıcı olarak silinecektir. Bu işlem geri alınamaz. Emin misiniz?")) {
+            return;
+        }
+        localStorage.removeItem('calendarPlans');
+        localStorage.removeItem('calendarEvents'); // Eski veriyi de temizle
+        
+        // Durumu sıfırla
+        this.plans = this.loadPlans(); // Varsayılan planı yükler
+        this.currentPlanId = 'default';
+        this.events = this.plans[this.currentPlanId].events;
+        
+        this.renderCalendar();
+        this.updatePlanSelector();
+        this.applyPlanTheme();
+        this.showNotification("Tüm veriler başarıyla silindi.", "success");
+    }
+
+    exportAllData() {
+        const dataStr = JSON.stringify(this.plans, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `takvim_yedek_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        this.showNotification('Tüm veriler başarıyla dışa aktarıldı!');
+    }
+
+    importAllData() {
+        if (!confirm("Mevcut tüm verileriniz (bütün planlar ve etkinlikler) içe aktarılan dosyadaki verilerle değiştirilecektir. Bu işlem geri alınamaz. Devam etmek istiyor musunuz?")) {
+            return;
+        }
+        
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'application/json';
+        fileInput.style.display = 'none';
+
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const importedPlans = JSON.parse(evt.target.result);
+                    if (typeof importedPlans === 'object' && importedPlans !== null && Object.keys(importedPlans).length > 0) {
+                        this.plans = importedPlans;
+                        this.savePlans();
+                        
+                        this.currentPlanId = 'default';
+                        if (!this.plans[this.currentPlanId]) {
+                           this.currentPlanId = Object.keys(this.plans)[0];
+                        }
+                        this.events = this.plans[this.currentPlanId].events;
+
+                        this.updatePlanSelector();
+                        this.renderCalendar();
+                        this.applyPlanTheme();
+                        this.showNotification('Tüm veriler başarıyla içe aktarıldı!', 'success');
+                    } else {
+                        throw new Error("Geçersiz dosya formatı");
+                    }
+                } catch (err) {
+                    console.error("Veri içe aktarma hatası:", err);
+                    this.showNotification('Geçersiz veya bozuk yedek dosyası!', 'error');
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        document.body.removeChild(fileInput);
     }
 }
 
