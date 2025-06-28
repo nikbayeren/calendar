@@ -976,8 +976,8 @@ class Calendar {
         document.getElementById('newPlanModal').style.display = 'none';
         this.editingPlanId = null; // Düzenleme modunu sıfırla
         // Modal başlığını ve buton metnini varsayılana döndür
-        document.querySelector('#newPlanModal h3').textContent = '🆕 Yeni Plan Oluştur';
-        document.getElementById('createPlan').textContent = '✅ Plan Oluştur';
+        document.querySelector('#newPlanModal h3').textContent = 'Yeni Plan Oluştur';
+        document.getElementById('createPlan').textContent = 'Plan Oluştur';
     }
     
     savePlan() {
@@ -1361,8 +1361,8 @@ class Calendar {
         });
         
         // Modal başlığını ve buton metnini düzenleme moduna göre değiştir
-        document.querySelector('#newPlanModal h3').textContent = '📝 Planı Düzenle';
-        document.getElementById('createPlan').textContent = '💾 Değişiklikleri Kaydet';
+        document.querySelector('#newPlanModal h3').textContent = 'Planı Düzenle';
+        document.getElementById('createPlan').textContent = 'Değişiklikleri Kaydet';
 
         document.getElementById('newPlanModal').style.display = 'block';
     }

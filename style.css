@@ -537,6 +537,51 @@ header {
     background-color: var(--border-primary);
 }
 
+/* --- Plan Form Stilleri --- */
+.plan-form {
+    margin-top: 1.5rem;
+}
+.form-group {
+    margin-bottom: 1.5rem;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+.color-options {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+.color-option {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.color-option:hover {
+    transform: scale(1.1);
+}
+.color-option.selected {
+    border-color: var(--accent-primary);
+}
+.color-option.selected::after {
+    content: '✓';
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.2rem;
+    line-height: 1;
+    text-shadow: 0 0 2px rgba(0,0,0,0.7);
+}
+
 /* --- Yıllık Görünüm Stilleri --- */
 .year-modal-content {
     max-width: 1200px;
