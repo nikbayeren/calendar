@@ -617,6 +617,10 @@ header h1 {
     backdrop-filter: blur(5px);
 }
 
+#newPlanModal {
+    z-index: 1001; /* Plan yönetimi modalının üzerinde görünmesi için */
+}
+
 .modal-content {
     background-color: white;
     margin: 10% auto;
