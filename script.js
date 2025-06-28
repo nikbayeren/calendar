@@ -65,7 +65,7 @@ class Calendar {
         // Tekrarlama bitiş tarihi göster/gizle
         document.getElementById('eventRepeat').addEventListener('change', (e) => {
             const container = document.getElementById('repeat-end-date-container');
-            if (e.target.value === 'none') {
+            if (e.target.value === 'none' || e.target.value === '') {
                 container.style.display = 'none';
             } else {
                 container.style.display = 'block';
@@ -760,40 +760,44 @@ class Calendar {
     openEventModal(date) {
         this.selectedDate = date;
         const dateKey = this.formatDate(date);
-        const eventObj = this.events[dateKey] || this.getRepeatingEventForDate(date) || { text: '', category: 'is', repeat: 'none', file: null, filename: null, repeatEndDate: null, startTime: '', endTime: '' };
+        const existingEvent = this.events[dateKey] || this.getRepeatingEventForDate(date);
+
+        // Modal'ı temizle ve başlangıç durumuna getir
+        document.getElementById('eventText').value = '';
+        document.getElementById('eventCategory').value = 'diger'; // Varsayılan: Kategori Yok
+        document.getElementById('eventRepeat').value = 'none'; // Varsayılan: Tekrarlanmasın
+        document.getElementById('eventStartTime').value = '';
+        document.getElementById('eventEndTime').value = '';
+        document.getElementById('eventRepeatEndDate').value = '';
+        document.getElementById('repeat-end-date-container').style.display = 'none';
+        document.getElementById('eventFileInfo').innerHTML = '';
+
+        if (existingEvent) {
+            // Var olan etkinliği yükle
+            document.getElementById('eventText').value = existingEvent.text || '';
+            document.getElementById('eventCategory').value = existingEvent.category || 'diger';
+            document.getElementById('eventRepeat').value = existingEvent.repeat || 'none';
+            document.getElementById('eventStartTime').value = existingEvent.startTime || '';
+            document.getElementById('eventEndTime').value = existingEvent.endTime || '';
+
+            const repeatContainer = document.getElementById('repeat-end-date-container');
+            if (existingEvent.repeat && existingEvent.repeat !== 'none' && existingEvent.repeat !== '') {
+                repeatContainer.style.display = 'block';
+                document.getElementById('eventRepeatEndDate').value = existingEvent.repeatEndDate || '';
+            }
+
+            if (existingEvent.file && existingEvent.filename) {
+                const fileInfo = document.getElementById('eventFileInfo');
+                fileInfo.innerHTML = `<span>${existingEvent.filename}</span> <a href="${existingEvent.file}" download="${existingEvent.filename}">İndir</a>`;
+                fileInfo.dataset.file = existingEvent.file;
+                fileInfo.dataset.filename = existingEvent.filename;
+            }
+        }
         
         document.getElementById('modalDate').textContent = `${date.getDate()} ${this.getMonthName(date.getMonth())} ${date.getFullYear()}`;
-        document.getElementById('eventText').value = eventObj.text || '';
-        document.getElementById('eventCategory').value = eventObj.category || 'is';
-        document.getElementById('eventRepeat').value = eventObj.repeat || 'none';
-        document.getElementById('eventStartTime').value = eventObj.startTime || '';
-        document.getElementById('eventEndTime').value = eventObj.endTime || '';
-        
-        // Tekrar bitiş tarihi
-        const repeatEndDateContainer = document.getElementById('repeat-end-date-container');
-        const repeatEndDateInput = document.getElementById('eventRepeatEndDate');
-        if (eventObj.repeat && eventObj.repeat !== 'none') {
-            repeatEndDateContainer.style.display = 'block';
-            repeatEndDateInput.value = eventObj.repeatEndDate || '';
-        } else {
-            repeatEndDateContainer.style.display = 'none';
-            repeatEndDateInput.value = '';
-        }
-
         document.getElementById('eventModal').style.display = 'block';
-        document.getElementById('deleteEvent').style.display = eventObj.text ? 'block' : 'none';
-        // Dosya göster
-        const fileInfo = document.getElementById('eventFileInfo');
-        if (eventObj.file && eventObj.filename) {
-            fileInfo.innerHTML = `<span>${eventObj.filename}</span> <a href="${eventObj.file}" download="${eventObj.filename}">İndir</a>`;
-            fileInfo.dataset.file = eventObj.file;
-            fileInfo.dataset.filename = eventObj.filename;
-        } else {
-            fileInfo.innerHTML = '';
-            fileInfo.dataset.file = '';
-            fileInfo.dataset.filename = '';
-        }
-        document.getElementById('eventFile').value = '';
+        document.getElementById('deleteEvent').style.display = existingEvent ? 'block' : 'none';
+
         if (!document.getElementById('copyEventToPlan')) {
             const copyBtn = document.createElement('button');
             copyBtn.id = 'copyEventToPlan';
@@ -804,21 +808,10 @@ class Calendar {
             copyBtn.onclick = () => this.openCopyEventToPlanMenu(dateKey);
             document.querySelector('.modal-buttons').appendChild(copyBtn);
         }
-        // Karakter sayacı başlat
+
         const eventText = document.getElementById('eventText');
-        const eventCharCount = document.getElementById('eventCharCount');
-        if (eventText && eventCharCount) {
-            eventCharCount.textContent = `${eventText.value.length}/500`;
-            eventText.maxLength = 500;
-            eventText.addEventListener('input', this.updateCharCount);
-        }
-        // Tekrar seçiminde bitiş tarihi alanını göster/gizle
-        const eventRepeatSelect = document.getElementById('eventRepeat');
-        if (eventRepeatSelect.value !== 'none') {
-            repeatEndDateContainer.style.display = 'block';
-        } else {
-            repeatEndDateContainer.style.display = 'none';
-        }
+        this.updateCharCount();
+        eventText.addEventListener('input', () => this.updateCharCount());
     }
     
     updateCharCount() {
@@ -827,6 +820,33 @@ class Calendar {
         if (eventText && eventCharCount) {
             eventCharCount.textContent = `${eventText.value.length}/500`;
         }
+    }
+
+    validateEventForm() {
+        const saveButton = document.getElementById('saveEvent');
+        const eventText = document.getElementById('eventText').value.trim();
+        const category = document.getElementById('eventCategory').value;
+        const repeat = document.getElementById('eventRepeat').value;
+        const repeatEndDate = document.getElementById('eventRepeatEndDate').value;
+
+        let isValid = true;
+
+        // 1. Etkinlik metni olmalı
+        if (eventText === '') {
+            isValid = false;
+        }
+
+        // 2. Kategori seçilmiş olmalı
+        if (category === '') {
+            isValid = false;
+        }
+
+        // 3. Eğer tekrar durumu 'none' değilse, bitiş tarihi girilmiş olmalı
+        if (repeat !== 'none' && repeatEndDate === '') {
+            isValid = false;
+        }
+        
+        saveButton.disabled = !isValid;
     }
     
     openCopyEventToPlanMenu(dateKey) {
@@ -851,20 +871,6 @@ class Calendar {
     closeModal() {
         document.getElementById('eventModal').style.display = 'none';
         this.selectedDate = null;
-        // Modal inputlarını sıfırla
-        document.getElementById('eventText').value = '';
-        document.getElementById('eventCategory').value = '';
-        document.getElementById('eventRepeat').value = 'none';
-        document.getElementById('eventFile').value = '';
-        document.getElementById('eventStartTime').value = '';
-        document.getElementById('eventEndTime').value = '';
-        const fileInfo = document.getElementById('eventFileInfo');
-        fileInfo.innerHTML = '';
-        fileInfo.dataset.file = '';
-        fileInfo.dataset.filename = '';
-        // Bitiş tarihi alanını ve değerini sıfırla
-        document.getElementById('repeat-end-date-container').style.display = 'none';
-        document.getElementById('eventRepeatEndDate').value = '';
     }
     
     saveEvent() {
