@@ -44,12 +44,13 @@ class Calendar {
             }
         });
         
-        // İndirme olayları
-        document.getElementById('exportBtn').addEventListener('click', () => this.toggleExportOptions());
-        document.getElementById('exportPDF').addEventListener('click', () => this.exportToPDF());
-        document.getElementById('exportExcel').addEventListener('click', () => this.exportToExcel());
-        document.getElementById('exportText').addEventListener('click', () => this.exportToText());
-        
+        // Dışa aktarma olayları
+        document.getElementById('exportBtn').addEventListener('click', () => this.openExportModal());
+        document.getElementById('closeExportModal').addEventListener('click', () => this.closeExportModal());
+        document.getElementById('exportPDF').addEventListener('click', () => { this.exportToPDF(); this.closeExportModal(); });
+        document.getElementById('exportExcel').addEventListener('click', () => { this.exportToExcel(); this.closeExportModal(); });
+        document.getElementById('exportText').addEventListener('click', () => { this.exportToText(); this.closeExportModal(); });
+
         // Paylaşım olayları
         document.getElementById('shareBtn').addEventListener('click', () => this.openShareModal());
         document.getElementById('closeShareModal').addEventListener('click', () => this.closeShareModal());
@@ -64,6 +65,7 @@ class Calendar {
                 this.closeShareModal();
                 this.closeNewPlanModal();
                 this.closePlanManagementModal();
+                this.closeExportModal();
             }
             // İndirme menüsünü kapat
             if (!e.target.closest('.export-controls')) {
@@ -219,8 +221,9 @@ class Calendar {
     
     // İndirme menüsünü aç/kapat
     toggleExportOptions() {
-        const options = document.getElementById('exportOptions');
-        options.classList.toggle('show');
+        // Bu fonksiyon yeni tasarımda kullanılmıyor ama hata vermemesi için kalabilir.
+        // const options = document.getElementById('exportOptions');
+        // if(options) options.classList.toggle('show');
     }
     
     // Etkinlik metnini güvenli şekilde string olarak döndür
