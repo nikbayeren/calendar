@@ -67,9 +67,12 @@ class Calendar {
                 this.closePlanManagementModal();
                 this.closeExportModal();
             }
-            // İndirme menüsünü kapat
-            if (!e.target.closest('.export-controls')) {
-                document.getElementById('exportOptions').classList.remove('show');
+            
+            const actionsDropdown = document.getElementById('actionsDropdown');
+            const actionsBtn = document.getElementById('actionsMenuBtn');
+            // Menü dışına tıklayınca kapat
+            if (actionsDropdown && actionsBtn && !actionsBtn.contains(e.target) && !actionsDropdown.contains(e.target)) {
+                actionsDropdown.style.display = 'none';
             }
         });
         
@@ -371,13 +374,16 @@ class Calendar {
         
         // Tüm etkinliklerde ara
         Object.keys(this.events).forEach(dateKey => {
-            const eventText = this.events[dateKey].toLowerCase();
+            const eventObj = this.events[dateKey];
+            if (!eventObj || !eventObj.text) return;
+
+            const eventText = eventObj.text.toLowerCase();
             if (eventText.includes(searchTerm)) {
                 const date = new Date(dateKey);
                 results.push({
                     date: date,
                     dateKey: dateKey,
-                    text: this.events[dateKey],
+                    text: eventObj.text,
                     matchIndex: eventText.indexOf(searchTerm)
                 });
             }
@@ -1414,6 +1420,15 @@ class Calendar {
         this.updatePlanSelector();
         
         this.showNotification(`'${planToDuplicate.name}' planı kopyalandı.`);
+    }
+
+    openExportModal() {
+        document.getElementById('exportModal').style.display = 'block';
+    }
+
+    closeExportModal() {
+        const modal = document.getElementById('exportModal');
+        if (modal) modal.style.display = 'none';
     }
 }
 
