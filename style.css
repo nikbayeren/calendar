@@ -299,7 +299,8 @@ header {
 }
 
 .day {
-    aspect-ratio: 1;
+    height: 120px;
+    overflow-y: auto;
     border-radius: var(--radius-md);
     border: 1px solid var(--border-primary);
     padding: 0.5rem;
