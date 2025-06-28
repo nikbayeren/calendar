@@ -125,6 +125,22 @@ class Calendar {
         document.getElementById('monthViewBtn').addEventListener('click', () => this.switchView('month'));
         document.getElementById('weekViewBtn').addEventListener('click', () => this.switchView('week'));
         document.getElementById('dayViewBtn').addEventListener('click', () => this.switchView('day'));
+
+        // Yeni "İşlemler" menüsü
+        const actionsBtn = document.getElementById('actionsMenuBtn');
+        const actionsDropdown = document.getElementById('actionsDropdown');
+        if(actionsBtn) {
+            actionsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                actionsDropdown.style.display = actionsDropdown.style.display === 'block' ? 'none' : 'block';
+            });
+        }
+        // Menü dışına tıklayınca kapat
+        window.addEventListener('click', (e) => {
+            if (actionsDropdown && !actionsBtn.contains(e.target)) {
+                actionsDropdown.style.display = 'none';
+            }
+        });
     }
     
     // Paylaşım ID oluştur

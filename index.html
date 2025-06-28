@@ -4,59 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aylık Takvim Planlayıcı</title>
-    <link rel="stylesheet" href="style.css?v=1.1">
+    <link rel="stylesheet" href="style.css?v=1.2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <header>
-            <div class="top-bar centered-bar">
-                <button id="homeBtn" class="home-btn">🏠 Anasayfa</button>
-                <div class="plan-controls small-plan-controls">
-                    <select id="planSelector" class="plan-selector small-plan-selector">
+            <div class="header-top">
+                <h1 class="header-title">Takvim</h1>
+                <div class="header-main-actions">
+                    <button id="homeBtn" class="header-action-btn">🏠</button>
+                    <button id="themeToggle" class="header-action-btn">🌙</button>
+                </div>
+            </div>
+            
+            <div class="header-bottom">
+                <div class="plan-selector-container">
+                    <select id="planSelector" class="plan-selector">
                         <option value="default">📅 Ana Plan</option>
                     </select>
-                    <button id="newPlanBtn" class="new-plan-btn small-btn">➕ Yeni Plan</button>
-                    <button id="managePlansBtn" class="manage-plans-btn small-btn">🔧 Planları Yönet</button>
-                    <button id="shiftPlanBtn" class="shift-plan-btn small-btn">⏭️ Planı Kaydır</button>
                 </div>
-                <button id="themeToggle" class="theme-toggle">🌙</button>
-            </div>
-            <h1 class="centered-title">Aylık Takvim Planlayıcı</h1>
-            <div class="controls-row">
-                <button id="prevMonth">&lt;</button>
-                <h2 id="currentMonth">Haziran 2025</h2>
-                <button id="nextMonth">&gt;</button>
-            </div>
-            <div class="controls-grid">
-                <div class="controls-row">
-                    <button id="monthViewBtn" class="month-view-btn" style="grid-column: 1;">📆 Ay</button>
-                    <button id="weekViewBtn" class="week-view-btn" style="grid-column: 2;">🗓️ Hafta</button>
-                    <button id="dayViewBtn" class="day-view-btn" style="grid-column: 3;">📖 Gün</button>
-                    <button id="yearViewBtn" class="year-view-btn" style="grid-column: 4;">📅 12 Ay Görünüm</button>
+
+                <div class="controls">
+                    <button id="prevMonth" title="Önceki Ay">‹</button>
+                    <h2 id="currentMonth">Haziran 2025</h2>
+                    <button id="nextMonth" title="Sonraki Ay">›</button>
                 </div>
-                <div class="controls-row" style="display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; margin-top: 8px;">
-                    <div></div>
-                    <div style="display: flex; justify-content: center;">
-                        <div class="export-controls">
-                            <button id="exportBtn" class="export-btn">📥 İndir</button>
-                            <div id="exportOptions" class="export-options">
-                                <button id="exportPDF">PDF İndir</button>
-                                <button id="exportExcel">Excel İndir</button>
-                                <button id="exportText">Metin İndir</button>
-                            </div>
+
+                <div class="actions-container">
+                     <div class="view-switcher">
+                        <button id="monthViewBtn" class="view-btn active" title="Ay Görünümü">Ay</button>
+                        <button id="weekViewBtn" class="view-btn" title="Hafta Görünümü">Hafta</button>
+                        <button id="dayViewBtn" class="view-btn" title="Gün Görünümü">Gün</button>
+                    </div>
+                    <div class="dropdown">
+                        <button id="actionsMenuBtn" class="dropdown-btn">☰ İşlemler</button>
+                        <div id="actionsDropdown" class="dropdown-content">
+                            <button id="newPlanBtn">➕ Yeni Plan</button>
+                            <button id="managePlansBtn">🔧 Planları Yönet</button>
+                            <button id="shiftPlanBtn">⏭️ Planı Kaydır</button>
+                            <button id="yearViewBtn">📅 Yıllık Görünüm</button>
+                            <button id="shareBtn">🔗 Paylaş</button>
+                            <button id="exportBtn">📥 İndir</button>
+                             <div class="divider"></div>
+                            <button id="exportData">Verileri Dışa Aktar</button>
+                            <button id="importData">Verileri İçe Aktar</button>
+                            <button id="clearData" class="danger">Tüm Verileri Temizle</button>
                         </div>
                     </div>
-                    <div style="display: flex; justify-content: center;">
-                        <button id="shareBtn" class="share-btn">🔗 Paylaş</button>
-                    </div>
-                    <div></div>
                 </div>
-            </div>
-            <div class="settings-section" style="margin-top: 10px;">
-                <h3>Ayarlar</h3>
-                <button id="clearData" class="danger-button">Tüm Verileri Temizle</button>
-                <button id="exportData">Verileri Dışa Aktar</button>
-                <button id="importData">Verileri İçe Aktar</button>
             </div>
         </header>
         
