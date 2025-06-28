@@ -62,6 +62,16 @@ class Calendar {
         document.getElementById('exportData').addEventListener('click', () => this.exportAllData());
         document.getElementById('importData').addEventListener('click', () => this.importAllData());
         
+        // Tekrarlama bitiş tarihi göster/gizle
+        document.getElementById('eventRepeat').addEventListener('change', (e) => {
+            const container = document.getElementById('repeat-end-date-container');
+            if (e.target.value === 'none') {
+                container.style.display = 'none';
+            } else {
+                container.style.display = 'block';
+            }
+        });
+
         // Modal dışına tıklayınca kapat
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
@@ -708,11 +718,23 @@ class Calendar {
     openEventModal(date) {
         this.selectedDate = date;
         const dateKey = this.formatDate(date);
-        const eventObj = this.events[dateKey] || { text: '', category: '', repeat: 'none', file: null, filename: null };
+        const eventObj = this.events[dateKey] || { text: '', category: '', repeat: 'none', file: null, filename: null, repeatEndDate: null };
         document.getElementById('modalDate').textContent = `${date.getDate()} ${this.getMonthName(date.getMonth())} ${date.getFullYear()}`;
         document.getElementById('eventText').value = eventObj.text || '';
         document.getElementById('eventCategory').value = eventObj.category || '';
         document.getElementById('eventRepeat').value = eventObj.repeat || 'none';
+        
+        // Tekrar bitiş tarihi
+        const repeatEndDateContainer = document.getElementById('repeat-end-date-container');
+        const repeatEndDateInput = document.getElementById('eventRepeatEndDate');
+        if (eventObj.repeat && eventObj.repeat !== 'none') {
+            repeatEndDateContainer.style.display = 'block';
+            repeatEndDateInput.value = eventObj.repeatEndDate || '';
+        } else {
+            repeatEndDateContainer.style.display = 'none';
+            repeatEndDateInput.value = '';
+        }
+
         document.getElementById('eventModal').style.display = 'block';
         document.getElementById('deleteEvent').style.display = eventObj.text ? 'block' : 'none';
         // Dosya göster
@@ -745,6 +767,9 @@ class Calendar {
             eventText.maxLength = 500;
             eventText.addEventListener('input', this.updateCharCount);
         }
+        // Bitiş tarihi alanını ve değerini sıfırla
+        document.getElementById('repeat-end-date-container').style.display = 'none';
+        document.getElementById('eventRepeatEndDate').value = '';
     }
     
     updateCharCount() {
@@ -786,6 +811,9 @@ class Calendar {
         fileInfo.innerHTML = '';
         fileInfo.dataset.file = '';
         fileInfo.dataset.filename = '';
+        // Bitiş tarihi alanını ve değerini sıfırla
+        document.getElementById('repeat-end-date-container').style.display = 'none';
+        document.getElementById('eventRepeatEndDate').value = '';
     }
     
     saveEvent() {
@@ -794,11 +822,19 @@ class Calendar {
         if (eventText === 'undefined') eventText = '';
         const eventCategory = document.getElementById('eventCategory').value;
         const eventRepeat = document.getElementById('eventRepeat').value;
+        const eventRepeatEndDate = document.getElementById('eventRepeatEndDate').value;
         const dateKey = this.formatDate(this.selectedDate);
         let fileData = document.getElementById('eventFileInfo').dataset.file || null;
         let fileName = document.getElementById('eventFileInfo').dataset.filename || null;
         if (eventText) {
-            this.events[dateKey] = { text: eventText, category: eventCategory, repeat: eventRepeat, file: fileData, filename: fileName };
+            this.events[dateKey] = { 
+                text: eventText, 
+                category: eventCategory, 
+                repeat: eventRepeat, 
+                file: fileData, 
+                filename: fileName,
+                repeatEndDate: eventRepeat === 'none' ? null : eventRepeatEndDate
+            };
         } else {
             delete this.events[dateKey];
         }
@@ -1184,16 +1220,30 @@ class Calendar {
         // Tüm etkinliklerde tekrarlayanları kontrol et
         for (const [key, eventObj] of Object.entries(this.events)) {
             if (!eventObj.repeat || eventObj.repeat === 'none') continue;
+            
             const [y, m, d] = key.split('-').map(Number);
+            const startDate = new Date(y, m - 1, d);
+            startDate.setHours(0, 0, 0, 0);
+
+            // Tekrar, ana etkinlik tarihinden önce başlayamaz
+            if (date < startDate) continue;
+
+            // Bitiş tarihi kontrolü
+            if (eventObj.repeatEndDate) {
+                const endDate = new Date(eventObj.repeatEndDate);
+                endDate.setHours(23, 59, 59, 999); // Gün sonunu dahil et
+                if (date > endDate) continue;
+            }
+
             if (eventObj.repeat === 'weekly') {
-                // Aynı haftanın aynı günü mü?
-                if (date.getDay() === new Date(y, m - 1, d).getDay()) return eventObj;
+                // Aynı haftanın aynı günü mü? (ve aynı gün değil)
+                if (date.getDay() === startDate.getDay() && date.getTime() !== startDate.getTime()) return eventObj;
             } else if (eventObj.repeat === 'monthly') {
-                // Her ay aynı gün mü?
-                if (date.getDate() === d) return eventObj;
+                // Her ay aynı gün mü? (ve aynı gün değil)
+                if (date.getDate() === d && date.getTime() !== startDate.getTime()) return eventObj;
             } else if (eventObj.repeat === 'yearly') {
-                // Her yıl aynı ay ve gün mü?
-                if (date.getDate() === d && date.getMonth() + 1 === m) return eventObj;
+                // Her yıl aynı ay ve gün mü? (ve aynı gün değil)
+                if (date.getDate() === d && date.getMonth() === (m - 1) && date.getTime() !== startDate.getTime()) return eventObj;
             }
         }
         return null;
