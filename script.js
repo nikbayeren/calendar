@@ -946,7 +946,7 @@ class Calendar {
 
     // Anasayfaya dön
     goHome() {
-        this.currentDate = new Date(2025, 5, 27);
+        this.currentDate = new Date();
         this.renderCalendar();
     }
 
