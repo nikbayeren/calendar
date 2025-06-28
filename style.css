@@ -537,6 +537,69 @@ header {
     background-color: var(--border-primary);
 }
 
+/* --- Yıllık Görünüm Stilleri --- */
+.year-modal-content {
+    max-width: 1200px;
+}
+
+.year-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.year-month {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.year-month:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent-primary);
+}
+
+.year-month-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.year-month-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.year-month-day {
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 0.25rem;
+    border-radius: 50%;
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.year-month-day.has-event {
+    background-color: color-mix(in srgb, var(--event-dot) 30%, transparent);
+    font-weight: 600;
+}
+
+.year-month-day.today {
+    background-color: var(--accent-primary);
+    color: var(--accent-primary-text);
+    font-weight: 700;
+}
+
 /* --- Responsive --- */
 @media (max-width: 992px) {
     .header-bottom {
